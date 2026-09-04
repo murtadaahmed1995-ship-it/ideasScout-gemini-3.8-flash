@@ -4,6 +4,7 @@ import { Idea, Stage, WorkspaceView } from '../../types';
 import { Glyph } from '../Glyph';
 import { IdeaCard } from '../IdeaCard';
 import { Sparkline } from '../Sparkline';
+import { OpportunityConfidenceScatter } from '../OpportunityConfidenceScatter';
 
 export { IdeaCard, Sparkline };
 
@@ -37,21 +38,29 @@ export const VaultView: React.FC<VaultProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [selectedIdeaIds, setSelectedIdeaIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'scatter'>('grid');
 
   const tagDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close tag filter dropdown when clicking outside
+  // Close tag filter dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) {
         setIsTagDropdownOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsTagDropdownOpen(false);
+      }
+    };
     if (isTagDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isTagDropdownOpen]);
 
@@ -489,7 +498,39 @@ export const VaultView: React.FC<VaultProps> = ({
           </span>
         </span>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* View Mode Switcher */}
+          <div className="filter-row" style={{ margin: 0, gap: '4px' }}>
+            <button
+              id="vault-view-grid-btn"
+              type="button"
+              className={`filter-chip ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              style={{ padding: '3px 8px', fontSize: '11px' }}
+            >
+              {isArabic ? 'شبكة' : 'Grid'}
+            </button>
+            <button
+              id="vault-view-list-btn"
+              type="button"
+              className={`filter-chip ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              style={{ padding: '3px 8px', fontSize: '11px' }}
+            >
+              {isArabic ? 'قائمة' : 'List'}
+            </button>
+            <button
+              id="vault-view-scatter-btn"
+              type="button"
+              className={`filter-chip ${viewMode === 'scatter' ? 'active' : ''}`}
+              onClick={() => setViewMode('scatter')}
+              style={{ padding: '3px 8px', fontSize: '11px', borderColor: viewMode === 'scatter' ? 'var(--cyan)' : undefined }}
+              title={isArabic ? 'خريطة توزيع الفرص والثقة' : 'Opportunity vs Confidence Scatter Matrix'}
+            >
+              📊 {isArabic ? 'خريطة التوزيع' : 'Scatter Matrix'}
+            </button>
+          </div>
+
           {sortedIdeas.length > 0 && (
             <button
               id="vault-select-all-btn"
@@ -520,30 +561,46 @@ export const VaultView: React.FC<VaultProps> = ({
         </div>
       </div>
 
-      {/* Idea Collection Grid with Framer Motion Layout Animations */}
+      {/* Idea Collection Grid, List, or Scatter Matrix */}
       {sortedIdeas.length > 0 ? (
-        <motion.section
-          layout
-          className="idea-collection-grid"
-          id="vault-ideas-grid"
-        >
-          <AnimatePresence mode="popLayout">
-            {sortedIdeas.map((item) => (
-              <IdeaCard
-                key={item.id}
-                idea={item}
-                isArabic={isArabic}
-                isSelected={selectedIdeaIds.has(item.id)}
-                stageLabels={stageLabels}
-                onToggleSelect={handleToggleSelectIdea}
-                onOpenReport={onOpenReport}
-                onUpdateIdea={onUpdateIdea}
-                onArchiveIdea={onArchiveIdea}
-                onUpdateIdeaTags={onUpdateIdeaTags}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.section>
+        viewMode === 'scatter' ? (
+          <OpportunityConfidenceScatter
+            isArabic={isArabic}
+            ideas={sortedIdeas}
+            onOpenReport={onOpenReport}
+          />
+        ) : (
+          <motion.section
+            layout
+            className={viewMode === 'list' ? 'idea-collection-list' : 'idea-collection-grid'}
+            id="vault-ideas-grid"
+          >
+            <AnimatePresence mode="popLayout">
+              {sortedIdeas.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.94, y: -10 }}
+                  transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3), ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <IdeaCard
+                    idea={item}
+                    isArabic={isArabic}
+                    isSelected={selectedIdeaIds.has(item.id)}
+                    stageLabels={stageLabels}
+                    onToggleSelect={handleToggleSelectIdea}
+                    onOpenReport={onOpenReport}
+                    onUpdateIdea={onUpdateIdea}
+                    onArchiveIdea={onArchiveIdea}
+                    onUpdateIdeaTags={onUpdateIdeaTags}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.section>
+        )
       ) : ideas.length === 0 ? (
         /* Enhanced empty state when user has no saved items in Vault */
         <div className="panel empty-state" id="vault-empty-state">

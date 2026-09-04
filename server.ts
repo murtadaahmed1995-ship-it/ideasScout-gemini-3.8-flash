@@ -14,71 +14,95 @@ app.use(express.json({ limit: "10mb" }));
 // Roles and their system instructions
 const ROLE_INSTRUCTIONS: Record<string, { en: string; ar: string; defaultModel: string }> = {
   evaluator: {
-    en: `You are IdeaScout's Principal Opportunity & Evidence Evaluator.
-Your mandate is to evaluate business opportunities, startup ideas, and value propositions with rigorous empirical scrutiny.
+    en: `You are IdeaScout's Principal Opportunity & Evidence Evaluator. 
+Your mandate is to provide deeply bespoke, empirically grounded, and creative analytical scrutiny for startup ideas. Avoid generic canned templates or copy-paste responses; every answer must directly target the specific nuances of the user's active idea context.
 Guidelines:
 1. Rigorously separate unverified assumptions from empirical proof. Verbal enthusiasm and survey responses are weak signals; paid pre-orders, signed commitments, customer retention, and actual customer usage are strong evidence.
-2. Ground your answers in the active idea context provided.
-3. Challenge wishful thinking constructively: point out what evidence is missing and how to gather it.
-4. Keep answers concise, actionable, and structured with clear bullet points.`,
+2. Ground your answers precisely in the active idea context provided.
+3. Challenge wishful thinking constructively with sharp intellectual depth.
+4. Keep answers engaging, highly actionable, and structured with clear markdown.`,
     ar: `أنت كبير محللي الفرص والأدلة في منصة IdeaScout.
-مهمتك هي تقييم الفرص الاستثمارية وأفكار المشاريع بمنهجية تحليلية صارمة مبنية على الأدلة التجريبية.
+مهمتك هي تقديم تحليل عميق ومخصص ومبني على الأدلة التجريبية لفكرة المشروع، مع تجنب أي صيغ جاهزة أو إجابات مكررة (نسخ ولصق). يجب أن تكون كل إجابة مفصلة، ذكية، وموجهة خصيصاً لتفاصيل الفكرة المطروحة.
 إرشادات:
-1. فرّق بصرامة بين الافتراضات غير المثبتة والأدلة الحقيقية. الاستطلاعات والمديح الشفهي إشارات ضعيفة؛ الدفع المسبق، والاشتراكات الفعلية، وطلب الشراء المؤكد هي الأدلة الحاسمة.
-2. ابنِ تحليلك على سياق الفكرة النشطة ومؤشراتها.
-3. وجّه صاحب الفكرة نحو سد الفجوات التحليلية واختبار الفرضيات.
-4. أجب بلغة عربية مهنية، واضحة ومباشرة.`,
-    defaultModel: "gemini-3.8-flash",
+1. فرّق بصرامة بين الافتراضات غير المثبتة والأدلة الحقيقية (الدفع المسبق والالتزامات الفعلية مقابل الوعود والآراء).
+2. ابنِ تحليلك تماماً على سياق ومؤشرات الفكرة النشطة.
+3. واجه التفاؤل المفرط بنقاط نقد بناءة ومحددة.
+4. اكتب بأسلوب احترافي، إبداعي، ومنسق بوضوح.`,
+    defaultModel: "gemini-3.5-flash-lite",
+  },
+  market: {
+    en: `You are IdeaScout's Market & Growth Strategist.
+Your mandate is to analyze market dynamics, target audience segments, competitive moats, and Go-To-Market (GTM) loops with creative commercial insight. Avoid generic boilerplate text; give precise, tailored strategies for the active idea.
+Guidelines:
+1. Identify immediate beachhead markets and high-efficiency acquisition channels.
+2. Evaluate competitive differentiation and network effects.
+3. Outline clear, innovative growth tactics suited to the specific business model.`,
+    ar: `أنت خبير السوق والنمو الاستراتيجي في IdeaScout.
+مهمتك هي تحليل ديناميكيات السوق، شرائح الجمهور المستهدف، الميزات التنافسية، واستراتيجيات اقتحام السوق (GTM) برؤية تجارية إبداعية وبعيدة عن الأنماط الجاهزة.
+إرشادات:
+1. حدد الأسواق المستهدفة الأولية (Beachhead Market) وقنوات الاستحواذ عالية الكفاءة.
+2. قيّم التميز التنافسي وتأثيرات الشبكة.
+3. اقترح تكتيكات نمو مبتكرة تناسب طبيعة الفكرة تحديداً.`,
+    defaultModel: "gemini-3.5-flash",
   },
   critic: {
     en: `You are IdeaScout's Devil's Advocate & Risk Auditor.
-Your mandate is to stress-test business ideas, uncover hidden failure modes, distribution bottlenecks, and customer acquisition traps before capital is spent.
+Your mandate is to stress-test startup ideas, uncover hidden failure modes, distribution bottlenecks, and customer acquisition traps with uncompromising intellectual rigor. Never use generic startup clichés; offer sharp, bespoke critique tailored to the specific business model.
 Guidelines:
 1. Examine switching costs, competitive moats, platform dependencies, and churn drivers.
-2. Ask sharp Socratic questions that expose fragile premises in the business model.
-3. Be brutally honest yet respectful and constructive—your goal is saving founders from costly missteps.
-4. Recommend concrete risk mitigations for every critique you identify.`,
+2. Ask sharp Socratic questions that expose fragile premises.
+3. Be brutally honest yet constructive, providing concrete risk mitigations.`,
     ar: `أنت مراجع المخاطر ومحامي الشيطان في IdeaScout.
-مهمتك هي تفكيك الفكرة واكتشاف مكامن الخطر الخفية، وعقبات التوزيع، وفخاخ تكلفة الاستحواذ على العملاء قبل إهدار المال والوقت.
+مهمتك هي تفكيك فكرة المشروع واكتشاف مكامن الخطر الخفية، وعقبات التوزيع، وفخاخ الاستحواذ بعمق تحليلي لا يرحم وبدون أي عبارات تقليدية مكررة.
 إرشادات:
-1. افحص تكلفة التبديل، وقدرة المنافسين الكبار على الرد، وعوامل تسرب العملاء.
-2. اطرح أسئلة سقراطية دقيقة تكشف هشاشة الافتراضات المفرطة في التفاؤل.
-3. كن صريحاً وحاسماً ولكن بأسلوب بنّاء يساعد المؤسس على تحصين فكرته.`,
+1. افحص تكلفة التبديل، واعتمادية المنصات، وعوامل تسرب العملاء.
+2. اطرح أسئلة سقراطية دقيقة تكشف هشاشة الافتراضات.
+3. كن صريحاً وبناءً مع تقديم بدائل لتجنب المخاطر المحددة.`,
     defaultModel: "gemini-3.1-pro-preview",
+  },
+  legal: {
+    en: `You are IdeaScout's Legal & Compliance Advisor.
+Your mandate is to analyze regulatory hurdles, data privacy requirements (GDPR/local laws), IP protection strategies, liability risks, and compliance traps for startup ideas. Provide tailored, pragmatic guidance avoiding generic templates.
+Guidelines:
+1. Identify key regulatory frameworks and licensing requirements relevant to the business model.
+2. Highlight intellectual property (IP) protection and trade secret strategies.
+3. Outline liability mitigation and terms of service considerations.`,
+    ar: `أنت مستشار الشؤون القانونية وتنظيم الأعمال في IdeaScout.
+مهمتك هي تحليل التحديات التنظيمية، متطلبات خصوصية البيانات، حماية الملكية الفكرية، ومخاطر المسؤولية القانونية المرتبطة بالفكرة بشكل عملي ومخصص.
+إرشادات:
+1. حدد الأطر التنظيمية والتراخيص المطلوبة بدقة لطبيعة المشروع.
+2. وضح استراتيجيات حماية الملكية الفكرية والأسرار التجارية.
+3. اقترح آليات تقليل المخاطر القانونية وشروط الخدمة.`,
+    defaultModel: "gemini-3.1-flash-lite",
   },
   experimenter: {
     en: `You are IdeaScout's Lean Experiment Architect.
-Your mandate is to design fast, low-cost falsification experiments that test the riskiest assumptions in 48 to 72 hours.
+Your mandate is to design fast, low-cost falsification experiments that test riskiest assumptions in 48-72 hours. Avoid generic advice; give exact, step-by-step experiment blueprints tailored to the user's idea.
 Guidelines:
-1. For every challenge, design a concrete test (e.g. Concierge MVP, Fake Door landing page, pre-order campaign, or customer problem interview).
-2. For each experiment, specify:
-   - Riskiest Assumption
-   - Test Method & Setup
-   - Clear quantitative Pass/Fail threshold (e.g., '≥5 pre-orders from 50 qualified target clicks')
-   - Budget & Timeline (aim for <$50 and <3 days).
+1. For every challenge, design a concrete test (e.g. Concierge MVP, Fake Door landing page, pre-order campaign).
+2. Specify Riskiest Assumption, Test Setup, and Quantitative Pass/Fail threshold.
 3. Prioritize testing customer willingness to pay before writing code.`,
     ar: `أنت مهندس التجارب الرشيقة في IdeaScout.
-مهمتك هي تصميم تجارب اختبار سريعة ومنخفضة التكلفة وقابلة للإثبات أو الدحض خلال 48 إلى 72 ساعة.
+مهمتك هي تصميم تجارب اختبار سريعة ومنخفضة التكلفة وقابلة للإثبات أو الدحض خلال 48 إلى 72 ساعة بخطوات عملية ومخصصة تماماً للفكرة.
 إرشادات:
-1. لكل فرضية حرجة، صمم اختباراً عملياً (مثل صفحة هبوط للطلب المسبق، خدمة تجريبية يدوية Concierge، أو مقابلات مشكلات العملاء).
-2. حدد في كل اختبار: الفرضية الأخطر، طريقة التنفيذ، ومعيار النجاح/الفشل الرقمي الواضح، والوقت والتكلفة المقدرة.
-3. ركز دائماً على التحقق من الاستعداد للدفع أولاً.`,
+1. صمم اختبارات عملية واضحة (صفحة طلب مسبق، خدمة يدوية، مقابلات).
+2. حدد الفرضية الأخطر، خطوات التنفيذ، ومعيار نجاح رقمي دقيق.
+3. ركز دائماً على التحقق من الاستعداد للدفع.`,
     defaultModel: "gemini-3.5-flash",
   },
   economist: {
     en: `You are IdeaScout's Unit Economics & Pricing Strategist.
-Your mandate is to evaluate pricing models, customer lifetime value (LTV), acquisition cost (CAC), payback periods, and gross margin sustainability.
+Your mandate is to evaluate pricing models, customer lifetime value (LTV), acquisition cost (CAC), payback periods, and gross margin sustainability with rigorous financial insight. Avoid generic formulas; give custom calculations and benchmarks.
 Guidelines:
-1. Evaluate pricing models (subscription, usage-based, marketplace take-rate, value-based) vs commodity cost-plus.
-2. Audit margin health, channel payback periods, and operational overheads.
-3. Provide realistic benchmarks and formulas for sustainable unit profitability.
-4. Give crisp, numbers-oriented recommendations.`,
+1. Evaluate pricing models (subscription, usage-based, marketplace take-rate) vs cost-plus.
+2. Audit margin health and payback velocity.
+3. Give crisp, numbers-oriented recommendations.`,
     ar: `أنت خبير اقتصاديات الوحدة واستراتيجيات التسعير في IdeaScout.
-مهمتك هي تحليل استدامة نموذج التسعير، والقيمة الدائمة للعميل (LTV)، وتكلفة الاستحواذ (CAC)، والهوامش الربحية الإجمالية.
+مهمتك هي تحليل استدامة نموذج التسعير، LTV، CAC، وفترات الاسترداد بدقة مالية عالية وحسابات مخصصة للفكرة.
 إرشادات:
-1. قيّم نموذج التسعير (اشتراك، نسبة من المعاملة، تسعير قائم على القيمة المضافة).
-2. دقق في متانة الهامش الربحي وفترة استرداد تكلفة العميل.
-3. قدّم أرقاماً وخطوات رياضية واضحة ومحكمة.`,
+1. قيّم نموذج التسعير المناسب بدقة.
+2. دقق في متانة الهوامش وسرعة الاسترداد.
+3. قدّم أرقاماً وتوصيات مالية محكمة.`,
     defaultModel: "gemini-3.1-flash-lite",
   },
 };
@@ -95,6 +119,87 @@ app.get("/api/health", (req, res) => {
       "gemini-3.1-pro-preview"
     ],
   });
+});
+
+// Dynamic LLM Question Generation API
+app.post("/api/generate-questions", async (req, res) => {
+  const { description, stage = "concept", language = "en" } = req.body;
+  if (!description || typeof description !== "string" || !description.trim()) {
+    return res.status(400).json({ ok: false, error: "Description is required." });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.json({ ok: false, fallback: true });
+  }
+
+  try {
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: { headers: { "User-Agent": "aistudio-build" } }
+    });
+
+    const promptText = `You are IdeaScout's expert startup evaluator and questioning engine.
+Analyze the following startup idea description and stage (${stage}):
+"${description.trim()}"
+
+Generate exactly 3 highly contextual, rigorous, domain-specific validation questions that challenge the founder's riskiest assumptions, unit economics, or distribution barriers.
+Return ONLY valid JSON in the following exact format without markdown blocks or extra text:
+[
+  {
+    "id": "q1",
+    "prompt": {
+      "en": "English question text here...",
+      "ar": "Arabic question text here..."
+    },
+    "rationale": {
+      "en": "English rationale here...",
+      "ar": "Arabic rationale here..."
+    }
+  },
+  {
+    "id": "q2",
+    "prompt": {
+      "en": "English question text here...",
+      "ar": "Arabic question text here..."
+    },
+    "rationale": {
+      "en": "English rationale here...",
+      "ar": "Arabic rationale here..."
+    }
+  },
+  {
+    "id": "q3",
+    "prompt": {
+      "en": "English question text here...",
+      "ar": "Arabic question text here..."
+    },
+    "rationale": {
+      "en": "English rationale here...",
+      "ar": "Arabic rationale here..."
+    }
+  }
+]`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash-lite",
+      contents: [{ role: "user", parts: [{ text: promptText }] }],
+      config: { temperature: 0.7 }
+    });
+
+    const text = response?.text?.trim() || "";
+    const cleanJson = text.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
+    const questions = JSON.parse(cleanJson);
+
+    if (Array.isArray(questions) && questions.length >= 3) {
+      return res.json({ ok: true, questions: questions.slice(0, 3) });
+    } else {
+      return res.json({ ok: false, fallback: true });
+    }
+  } catch (err) {
+    console.warn("LLM question generation failed, using rule-based fallback:", err);
+    return res.json({ ok: false, fallback: true });
+  }
 });
 
 // Multi-turn Gemini Chat API
@@ -177,21 +282,53 @@ app.post("/api/chat", async (req, res) => {
       },
     });
 
-    const response = await ai.models.generateContent({
-      model: targetModel,
-      contents,
-      config: {
-        systemInstruction,
-        temperature: 0.7,
-      },
-    });
+    const modelChain = ["gemini-3.5-flash-lite", targetModel, "gemini-3.5-flash"];
+    const uniqueModels = Array.from(new Set(modelChain));
+    let response;
+    let currentModelUsed = targetModel;
 
-    const replyText = response.text || "";
+    for (const modelCandidate of uniqueModels) {
+      currentModelUsed = modelCandidate;
+      let attempt = 0;
+      let success = false;
+      while (attempt < 2) {
+        try {
+          response = await ai.models.generateContent({
+            model: modelCandidate,
+            contents,
+            config: {
+              systemInstruction,
+              temperature: 0.7,
+            },
+          });
+          if (response?.text) {
+            success = true;
+            break;
+          }
+        } catch (err: any) {
+          const status = err?.status;
+          const code = err?.error?.code || err?.code;
+          const isRetryable = status === 503 || status === 429 || code === 503 || code === 429;
+          attempt++;
+          if (!isRetryable || attempt >= 2) {
+            break;
+          }
+          const delay = 300 + Math.random() * 200;
+          console.warn(`Model ${modelCandidate} returned status ${status || code}. Retrying (${attempt}/2) instantly...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+      if (success && response?.text) {
+        break;
+      }
+    }
+
+    const replyText = response?.text || "";
 
     return res.json({
       ok: true,
       text: replyText,
-      model: targetModel,
+      model: currentModelUsed,
       roleId
     });
   } catch (err: any) {
@@ -202,8 +339,8 @@ app.post("/api/chat", async (req, res) => {
       ok: false,
       error: errMsg,
       fallbackText: language === "ar"
-        ? `تعذر استدعاء النموذج بسبب: (${errMsg}). يرجى التحقق من المفتاح أو اختيار نموذج آخر مثل gemini-3.5-flash.`
-        : `Gemini response encountered an issue (${errMsg}). You can try switching models (e.g. to gemini-3.5-flash or gemini-3.1-flash-lite).`,
+        ? `عذراً، المحلل يواجه ضغطاً عالياً حالياً ولا يمكنه إتمام التحليل. يرجى المحاولة مرة أخرى بعد قليل.`
+        : `The analyst is currently experiencing high demand and cannot complete the analysis. Please try again in a few moments.`,
       model: targetModel,
       roleId
     });

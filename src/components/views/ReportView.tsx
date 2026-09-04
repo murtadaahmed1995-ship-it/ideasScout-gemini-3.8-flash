@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Idea, ReportTab, Stage } from '../../types';
 import { Glyph } from '../Glyph';
 import { EvidenceProgressRing, evaluateStability } from '../EvidenceProgressRing';
+import { MarkdownRenderer } from '../MarkdownRenderer';
+import { AnimatedCounter } from '../AnimatedCounter';
 
 interface ReportViewProps {
   isArabic: boolean;
@@ -122,15 +124,14 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </span>
               <span className="evidence-coverage-badge">
                 <Glyph name="signal" />
-                {isArabic
-                  ? `تغطية الأدلة: ${evidenceSummary.coverage}%`
-                  : `Evidence Coverage: ${evidenceSummary.coverage}%`}
+                {isArabic ? 'تغطية الأدلة: ' : 'Evidence Coverage: '}
+                <AnimatedCounter value={evidenceSummary.coverage} suffix="%" />
               </span>
             </div>
             <h1>{isArabic ? idea.title.ar : idea.title.en}</h1>
-            <p className="report-summary">
+            <MarkdownRenderer className="report-summary">
               {isArabic ? report.summary.ar : report.summary.en}
-            </p>
+            </MarkdownRenderer>
           </div>
 
           <div className="report-actions">
@@ -147,7 +148,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
             <button
               id="report-ask-btn"
               type="button"
-              className="btn btn-outline"
+              className="btn btn-secondary"
               onClick={handleAsk}
             >
               <Glyph name="chat" />
@@ -181,11 +182,12 @@ export const ReportView: React.FC<ReportViewProps> = ({
             </div>
             <div className="score-box-body">
               <div
+                key={report.opportunityScore}
                 className="score-ring score-ring-large"
                 style={{ ['--score' as any]: `${report.opportunityScore * 3.6}deg` }}
               >
                 <div className="score-ring-inner">
-                  <strong>{report.opportunityScore}</strong>
+                  <strong><AnimatedCounter value={report.opportunityScore} /></strong>
                   <span>{isArabic ? 'الفرصة' : 'Opportunity'}</span>
                 </div>
               </div>
@@ -203,7 +205,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <span className="panel-kicker">
                 {isArabic ? 'ثقة الأدلة الواقعية' : 'EVIDENCE CONFIDENCE'}
               </span>
-              <strong>{confidenceScore}%</strong>
+              <strong><AnimatedCounter value={confidenceScore} suffix="%" /></strong>
             </div>
             <div className="score-box-body">
               <div className="readiness-track">
@@ -231,7 +233,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <span className="panel-kicker">
                 {isArabic ? 'جاهزية التحقق' : 'VALIDATION READINESS'}
               </span>
-              <strong>{readinessScore}%</strong>
+              <strong><AnimatedCounter value={readinessScore} suffix="%" /></strong>
             </div>
             <div className="score-box-body">
               <div className="readiness-track">
@@ -327,7 +329,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {report.strongestSignals.map((sig) => (
                 <div key={sig.label.en} className="signal-item">
                   <strong>{isArabic ? sig.label.ar : sig.label.en}</strong>
-                  <p>{isArabic ? sig.detail.ar : sig.detail.en}</p>
+                  <MarkdownRenderer>{isArabic ? sig.detail.ar : sig.detail.en}</MarkdownRenderer>
                 </div>
               ))}
             </section>
@@ -340,7 +342,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {report.weakestSignals.map((sig) => (
                 <div key={sig.label.en} className="signal-item">
                   <strong>{isArabic ? sig.label.ar : sig.label.en}</strong>
-                  <p>{isArabic ? sig.detail.ar : sig.detail.en}</p>
+                  <MarkdownRenderer>{isArabic ? sig.detail.ar : sig.detail.en}</MarkdownRenderer>
                 </div>
               ))}
             </section>
@@ -385,7 +387,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {report.recommendations.map((rec) => (
                 <div key={rec.label.en} className="rec-item">
                   <strong>{isArabic ? rec.label.ar : rec.label.en}</strong>
-                  <p>{isArabic ? rec.detail.ar : rec.detail.en}</p>
+                  <MarkdownRenderer>{isArabic ? rec.detail.ar : rec.detail.en}</MarkdownRenderer>
                 </div>
               ))}
             </section>
@@ -613,7 +615,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   {report.facts.map((item) => (
                     <article key={item.label.en} className="evidence-card">
                       <strong>{isArabic ? item.label.ar : item.label.en}</strong>
-                      <p>{isArabic ? item.detail.ar : item.detail.en}</p>
+                      <MarkdownRenderer>{isArabic ? item.detail.ar : item.detail.en}</MarkdownRenderer>
                     </article>
                   ))}
                 </div>
@@ -628,7 +630,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   {report.assumptions.map((item) => (
                     <article key={item.label.en} className="evidence-card">
                       <strong>{isArabic ? item.label.ar : item.label.en}</strong>
-                      <p>{isArabic ? item.detail.ar : item.detail.en}</p>
+                      <MarkdownRenderer>{isArabic ? item.detail.ar : item.detail.en}</MarkdownRenderer>
                     </article>
                   ))}
                 </div>
@@ -644,7 +646,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                     report.missingEvidence.map((item) => (
                       <article key={item.label.en} className="evidence-card">
                         <strong>{isArabic ? item.label.ar : item.label.en}</strong>
-                        <p>{isArabic ? item.detail.ar : item.detail.en}</p>
+                        <MarkdownRenderer>{isArabic ? item.detail.ar : item.detail.en}</MarkdownRenderer>
                       </article>
                     ))
                   ) : (
@@ -665,7 +667,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {isArabic ? 'آلية احتساب النتيجة والشفافية' : 'HOW SCORES WERE DERIVED'}
             </span>
             <h2>{isArabic ? 'شفافية الخوارزمية' : 'Algorithmic Transparency'}</h2>
-            <p>{isArabic ? report.scoreExplanation.ar : report.scoreExplanation.en}</p>
+            <MarkdownRenderer>{isArabic ? report.scoreExplanation.ar : report.scoreExplanation.en}</MarkdownRenderer>
             <p style={{ marginTop: '0.75rem', color: 'var(--muted)', fontSize: '0.875rem' }}>
               {isArabic ? report.disclaimer.ar : report.disclaimer.en}
             </p>
@@ -685,7 +687,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {report.risks.map((item) => (
                 <article key={item.label.en} className="evidence-card">
                   <strong>{isArabic ? item.label.ar : item.label.en}</strong>
-                  <p>{isArabic ? item.detail.ar : item.detail.en}</p>
+                  <MarkdownRenderer>{isArabic ? item.detail.ar : item.detail.en}</MarkdownRenderer>
                 </article>
               ))}
             </div>
@@ -700,7 +702,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {report.opportunities.map((item) => (
                 <article key={item.label.en} className="evidence-card">
                   <strong>{isArabic ? item.label.ar : item.label.en}</strong>
-                  <p>{isArabic ? item.detail.ar : item.detail.en}</p>
+                  <MarkdownRenderer>{isArabic ? item.detail.ar : item.detail.en}</MarkdownRenderer>
                 </article>
               ))}
             </div>
@@ -715,7 +717,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {report.validationPriorities.map((item) => (
                 <article key={item.label.en} className="evidence-card">
                   <strong>{isArabic ? item.label.ar : item.label.en}</strong>
-                  <p>{isArabic ? item.detail.ar : item.detail.en}</p>
+                  <MarkdownRenderer>{isArabic ? item.detail.ar : item.detail.en}</MarkdownRenderer>
                 </article>
               ))}
             </div>
@@ -805,7 +807,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
         <header className="print-header">
           <div className="print-title">
             <h1>{isArabic ? idea.title.ar : idea.title.en}</h1>
-            <p>{isArabic ? report.summary.ar : report.summary.en}</p>
+            <MarkdownRenderer>{isArabic ? report.summary.ar : report.summary.en}</MarkdownRenderer>
           </div>
           <div className="print-meta-badge">
             <strong>{stageLabels[idea.stage]}</strong>
@@ -841,7 +843,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
             </div>
             <p className="print-score-desc">
               {isArabic
-                ? `نسبة تغطية الأدلة: ${evidenceSummary.coverage}% مع رصد ${evidenceSummary.positiveCount} إشارة إيجابية و ${evidenceSummary.assumptionCount} افتراضات حرجة.`
+                ? `نسبة تغطية الأدلة: ${evidenceSummary.coverage}% مع رصد ${evidenceSummary.positiveCount} إشارة إيجابية و${evidenceSummary.assumptionCount} افتراضات حرجة.`
                 : `Evidence coverage at ${evidenceSummary.coverage}% with ${evidenceSummary.positiveCount} validated signals and ${evidenceSummary.assumptionCount} critical assumptions.`}
             </p>
           </div>
@@ -865,8 +867,8 @@ export const ReportView: React.FC<ReportViewProps> = ({
             <span>{isArabic ? 'تصنيف الأدلة والافتراضات' : 'Evidence Taxonomy Breakdown'}</span>
             <span style={{ fontSize: '9pt', color: '#64748b' }}>
               {isArabic
-                ? `الاستقرار: ${overallStability.posPercent}% إيجابي (+${overallPositive} / -${overallNegative}) • ${report.evidence?.length ?? report.facts.length} عنصر مسجل`
-                : `Stability: ${overallStability.posPercent}% Positive (+${overallPositive} / -${overallNegative}) • ${report.evidence?.length ?? report.facts.length} items logged`}
+                ? `الاستقرار: ${overallStability.posPercent}% إيجابي (+${overallPositive} / -${overallNegative}) • ${report.evidence?.length || 0} عنصر مسجل`
+                : `Stability: ${overallStability.posPercent}% Positive (+${overallPositive} / -${overallNegative}) • ${report.evidence?.length || 0} items logged`}
             </span>
           </h2>
 
@@ -880,7 +882,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </tr>
             </thead>
             <tbody>
-              {report.facts.map((fact) => (
+              {(report.evidence || []).map((fact) => (
                 <tr key={fact.id}>
                   <td>
                     <span className={`print-type-badge print-type-${fact.type}`}>
@@ -888,7 +890,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                     </span>
                   </td>
                   <td>{provenanceLabels[fact.provenance]?.[isArabic ? 'ar' : 'en'] ?? fact.provenance}</td>
-                  <td>{fact.claim}</td>
+                  <td>{isArabic ? fact.claim.ar : fact.claim.en}</td>
                   <td><strong>{fact.dimension}</strong></td>
                 </tr>
               ))}
@@ -903,8 +905,8 @@ export const ReportView: React.FC<ReportViewProps> = ({
           </h2>
           <div className="print-dimensions-grid">
             {report.dimensions.map((dim) => (
-              <div key={dim.name} className="print-dim-row">
-                <span>{dim.label}</span>
+              <div key={dim.key} className="print-dim-row">
+                <span>{isArabic ? dim.label.ar : dim.label.en}</span>
                 <strong>{dim.score} / 100</strong>
               </div>
             ))}
@@ -917,9 +919,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
             <span>{isArabic ? 'أولويات التحقق والتنفيذ' : 'Validation & Next Best Actions'}</span>
           </h2>
           <ol style={{ paddingInlineStart: '20px', margin: '0', fontSize: '9.5pt', lineHeight: '1.6' }}>
-            {report.nextBestActions.map((action, idx) => (
+            {report.nextBestAction.checklist.map((action, idx) => (
               <li key={idx} style={{ marginBottom: '6px' }}>
-                <strong>{action}</strong>
+                <strong>{isArabic ? action.ar : action.en}</strong>
               </li>
             ))}
           </ol>

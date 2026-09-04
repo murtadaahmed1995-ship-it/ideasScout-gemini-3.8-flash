@@ -266,6 +266,149 @@ export function generateContextualQuestions(desc: string, _stage: Stage): Questi
   const lower = cleanText(desc);
 
   if (
+    lower.includes('ai') ||
+    lower.includes('llm') ||
+    lower.includes('gpt') ||
+    lower.includes('model') ||
+    lower.includes('ذكاء اصطناعي') ||
+    lower.includes('نموذج')
+  ) {
+    return [
+      {
+        id: 'ai-q1',
+        prompt: {
+          en: 'What proprietary data flywheel or exclusive fine-tuning pipeline prevents larger foundational model providers from easily replicating your feature in an update?',
+          ar: 'ما هي حلقة بيانات الملكية أو مسار الضبط الدقيق (Fine-tuning) الحصري الذي يمنع مزودي النماذج الكبرى من نسخ ميزتك بسهولة في تحديث قادم؟'
+        },
+        rationale: {
+          en: 'Evaluates defensibility against wrapper vulnerability and model commoditization.',
+          ar: 'يقيم مدى الحماية ضد ضعف التطبيقات البسيطة (Wrappers) وسهولة استنساخ النماذج.'
+        }
+      },
+      {
+        id: 'ai-q2',
+        prompt: {
+          en: 'What is the exact API inference latency and token cost per workflow execution, and how does it impact your gross margins at scale?',
+          ar: 'ما هي تأخيرات استدلال واجهة برمجة التطبيقات (API Latency) وتكلفة الرموز (Tokens) لكل عملية، وكيف تؤثر على هامش الربح الإجمالي على نطاق واسع؟'
+        },
+        rationale: {
+          en: 'Exposes unit economic feasibility under high-frequency usage.',
+          ar: 'يكشف جدوى اقتصاديات الوحدات التشغيلية عند الاستخدام عالي الكثافة.'
+        }
+      },
+      {
+        id: 'ai-q3',
+        prompt: {
+          en: 'Have you measured hallucination rates or output reliability with real users in high-stakes scenarios?',
+          ar: 'هل قمت بقياس معدلات الهلوسة أو موثوقية المخرجات مع مستخدمين حقيقيين في سيناريوهات عالية المخاطر؟'
+        },
+        rationale: {
+          en: 'Tests operational risk and accuracy thresholds required for adoption.',
+          ar: 'يختبر المخاطر التشغيلية وعتبات الدقة المطلوبة لاعتماد الحل.'
+        }
+      }
+    ];
+  }
+
+  if (
+    lower.includes('fintech') ||
+    lower.includes('payment') ||
+    lower.includes('money') ||
+    lower.includes('wallet') ||
+    lower.includes('crypto') ||
+    lower.includes('bank') ||
+    lower.includes('مدفوعات') ||
+    lower.includes('مالية') ||
+    lower.includes('بنك') ||
+    lower.includes('محفظة')
+  ) {
+    return [
+      {
+        id: 'fin-q1',
+        prompt: {
+          en: 'What sponsor bank, regulatory license, or compliance partnership is legally required to clear transactions in your target market?',
+          ar: 'ما هو البنك الراعي أو الترخيص التنظيمي أو الشراكة الامتثالية المطلوبة قانونياً لتمرير المعاملات في سوقك المستهدف؟'
+        },
+        rationale: {
+          en: 'Uncovers regulatory and licensing bottlenecks before launch.',
+          ar: 'يكشف العقبات التنظيمية والتراخيص القانونية اللازمة قبل الإطلاق.'
+        }
+      },
+      {
+        id: 'fin-q2',
+        prompt: {
+          en: 'What are your exact net unit economics per transaction after factoring in interchange, processing fees, and fraud buffers?',
+          ar: 'ما هي اقتصاديات الوحدات الصافية لكل معاملة بعد احتساب رسوم التبادل، رسوم المعالجة، واحتياطيات الاحتيال؟'
+        },
+        rationale: {
+          en: 'Verifies whether monetization yields positive net margin per user.',
+          ar: 'يتحقق مما إذا كان نموذج الدخل يحقق هامش ربح صافي إيجابي لكل مستخدم.'
+        }
+      },
+      {
+        id: 'fin-q3',
+        prompt: {
+          en: 'What specific fraud vector or chargeback risk threatens early volume, and what prevention guardrails are built in?',
+          ar: 'ما هو متجه الاحتيال المحدد أو مخاطر الاسترجاع (Chargebacks) التي تهدد الحجم المبكر، وما هي حواجز الوقاية المبنية؟'
+        },
+        rationale: {
+          en: 'Assesses financial risk exposure during early transaction scaling.',
+          ar: 'يقيم التعرض للمخاطر المالية أثناء التوسع المبكر للمعاملات.'
+        }
+      }
+    ];
+  }
+
+  if (
+    lower.includes('health') ||
+    lower.includes('medical') ||
+    lower.includes('doctor') ||
+    lower.includes('patient') ||
+    lower.includes('clinic') ||
+    lower.includes('hospital') ||
+    lower.includes('صحة') ||
+    lower.includes('طبي') ||
+    lower.includes('مريض') ||
+    lower.includes('مستشفى')
+  ) {
+    return [
+      {
+        id: 'hlth-q1',
+        prompt: {
+          en: 'What clinical validation, IRB approval, or regulatory data privacy compliance (e.g., HIPAA / local health data laws) is mandatory before pilot deployment?',
+          ar: 'ما هو الاعتماد السريري أو موافقة لجان المراجعة المؤسسية (IRB) أو الامتثال لخصوصية البيانات الطبية اللازم إلزامياً قبل النشر التجريبي؟'
+        },
+        rationale: {
+          en: 'Identifies legal and clinical prerequisites for healthcare adoption.',
+          ar: 'يحدد المتطلبات القانونية والسريرية لاعتماد الخدمات الصحية.'
+        }
+      },
+      {
+        id: 'hlth-q2',
+        prompt: {
+          en: 'Who is the ultimate paying stakeholder (hospital administration, medical insurance provider, or out-of-pocket patient)?',
+          ar: 'من هو صاحب المصلحة الدافع للرسوم نهائياً (إدارة المستشفى، مزود التأمين الطبي، أم المريض من جيبه الخاص)؟'
+        },
+        rationale: {
+          en: 'Clarifies complex healthcare procurement and reimbursement pathways.',
+          ar: 'يوضح مسارات الشراء المعقدة واسترداد التكاليف في قطاع الرعاية الصحية.'
+        }
+      },
+      {
+        id: 'hlth-q3',
+        prompt: {
+          en: 'What liability safeguards and malpractice insurance mechanisms protect your platform against diagnostic or clinical errors?',
+          ar: 'ما هي ضمانات المسؤولية وآليات التأمين ضد الأخطاء المهنية التي تحمي منصتك ضد الأخطاء التشخيصية أو السريرية؟'
+        },
+        rationale: {
+          en: 'Guards against catastrophic liability exposure in medical workflows.',
+          ar: 'يحمي من التعرض لمسؤوليات قانونية كارثية في سير العمل الطبي.'
+        }
+      }
+    ];
+  }
+
+  if (
     lower.includes('salon') ||
     lower.includes('appointment') ||
     lower.includes('booking') ||
@@ -359,21 +502,21 @@ export function generateContextualQuestions(desc: string, _stage: Stage): Questi
 
   return [
     {
-      id: 'q1',
+      id: 'gen-q1',
       prompt: {
-        en: 'What specific measurable pain or cost does the target customer experience today, and how frequently does it occur?',
-        ar: 'ما الألم أو التكلفة المحددة والقابلة للقياس التي يعاني منها العميل المستهدف اليوم، وكم مرة تتكرر؟'
+        en: `Based on your idea ("${desc.slice(0, 40)}..."), what specific measurable pain or financial cost does the target customer experience today, and how frequently does it occur?`,
+        ar: `بناءً على فكرتك ("${desc.slice(0, 40)}..."), ما هو الألم المحدد أو التكلفة المالية القابلة للقياس التي يعاني منها العميل المستهدف اليوم، وكم مرة تتكرر؟`
       },
       rationale: {
-        en: 'Separates genuine urgent pain from mild "nice-to-have" conveniences.',
+        en: 'Separates genuine urgent pain from mild conveniences.',
         ar: 'يفصل بين الألم الملح والحقيقي وبين الحلول التكميلية غير الضرورية.'
       }
     },
     {
-      id: 'q2',
+      id: 'gen-q2',
       prompt: {
-        en: 'Have you conducted structured interviews with potential buyers, and what exact workaround do they currently use?',
-        ar: 'هل أجريت مقابلات منظمة مع مشترين محتملين، وما البديل الفعلي الذي يعتمدون عليه حالياً؟'
+        en: 'Have you conducted structured interviews with prospective buyers, and what exact workaround do they currently use to solve this?',
+        ar: 'هل أجريت مقابلات منظمة مع مشترين محتملين، وما البديل الفعلي الذي يعتمدون عليه حالياً لحل هذه المشكلة؟'
       },
       rationale: {
         en: 'Validates real-world customer discovery and identifies existing competitor habits.',
@@ -381,14 +524,14 @@ export function generateContextualQuestions(desc: string, _stage: Stage): Questi
       }
     },
     {
-      id: 'q3',
+      id: 'gen-q3',
       prompt: {
-        en: 'What concrete signal or experiment (pre-orders, paid deposits, LOIs, pilot usage) validates willingness to pay?',
-        ar: 'ما الإشارة الملموسة أو التجربة (حجوزات مسبقة، دفع مالي، خطابات نوايا، استخدام تجريبي) التي تثبت الاستعداد للدفع؟'
+        en: 'What concrete empirical signal (pre-orders, paid deposits, LOIs, or signed pilots) validates their willingness to pay?',
+        ar: 'ما هو الدليل العملي الملموس (حجوزات مسبقة، دفع مالي، خطابات نوايا، أو تجارب موقعة) الذي يثبت استعدادهم الفعلي للدفع؟'
       },
       rationale: {
-        en: 'Grounds the monetization hypothesis in empirical evidence rather than founder assumption.',
-        ar: 'يرسخ فرضية نموذج الإيرادات في أدلة عملية بدلاً من افتراضات المؤسس.'
+        en: 'Grounds the monetization hypothesis in empirical evidence rather than assumption.',
+        ar: 'يرسخ فرضية نموذج الإيرادات في أدلة عملية بدلاً من الافتراضات.'
       }
     }
   ];

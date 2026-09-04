@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Idea } from '../../types';
+import { StructuredResponse } from '../StructuredResponse';
 import {
   Sparkles,
   ShieldAlert,
@@ -17,11 +18,12 @@ import {
   Info
 } from 'lucide-react';
 
-export type ChatRoleId = 'evaluator' | 'critic' | 'experimenter' | 'economist';
+export type ChatRoleId = 'evaluator' | 'market' | 'critic' | 'legal' | 'experimenter' | 'economist';
 
 export type GeminiModelId =
   | 'gemini-3.8-flash'
   | 'gemini-3.5-flash'
+  | 'gemini-3.5-flash-lite'
   | 'gemini-3.1-flash-lite'
   | 'gemini-3.1-pro-preview';
 
@@ -59,7 +61,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Separates unverified assumptions from proof & measures readiness',
       ar: 'يفصل الافتراضات غير المثبتة عن الأدلة الحقيقية ويقيس الجاهزية'
     },
-    recommendedModel: 'gemini-3.8-flash',
+    recommendedModel: 'gemini-3.5-flash-lite',
     defaultSuggestions: {
       en: [
         'What is my biggest unverified assumption right now?',
@@ -72,6 +74,36 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
         'كيف يمكنني رفع نسبة الثقة بالأدلة إلى أكثر من 75%؟',
         'هل فرضية الاستعداد للدفع مدعومة بمعاملات نقدية فعلية؟',
         'ما هو الدليل الذي قد يثبت أن هذه المشكلة ليست عاجلة؟'
+      ]
+    }
+  },
+  market: {
+    id: 'market',
+    name: {
+      en: 'Market & Growth Strategist',
+      ar: 'خبير السوق والنمو الاستراتيجي'
+    },
+    badge: {
+      en: 'Market Strategist',
+      ar: 'خبير السوق والنمو'
+    },
+    tagline: {
+      en: 'Analyzes market dynamics, acquisition loops & competitive moats',
+      ar: 'يحلل ديناميكيات السوق وقنوات الاستحواذ والميزات التنافسية'
+    },
+    recommendedModel: 'gemini-3.5-flash-lite',
+    defaultSuggestions: {
+      en: [
+        'What is our ideal beachhead market for fast early traction?',
+        'How do we build an unfair competitive moat against larger players?',
+        'What high-efficiency Go-To-Market channel should we prioritize?',
+        'How can we trigger viral or organic growth loops?'
+      ],
+      ar: [
+        'ما هو السوق الأولي الأنسب لتحقيق انطلاقة سريعة؟',
+        'كيف نبني ميزة تنافسية صعبة التقليد ضد الشركات الكبرى؟',
+        'ما هي قناة اقتحام السوق الأكثر كفاءة التي يجب أن نبدأ بها؟',
+        'كيف نصمم حلقة نمو عضوي أو انتشاري للمشروع؟'
       ]
     }
   },
@@ -89,7 +121,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Uncovers lethal blindspots, churn traps & distribution friction',
       ar: 'يكشف مكامن الخطر الخفية، وفخاخ التسرب، وعقبات التوزيع'
     },
-    recommendedModel: 'gemini-3.1-pro-preview',
+    recommendedModel: 'gemini-3.5-flash-lite',
     defaultSuggestions: {
       en: [
         'What are the top 3 lethal reasons this idea could fail in month 3?',
@@ -102,6 +134,36 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
         'لماذا لم تقم الشركات القائمة أو المنافسون الكبار ببناء هذا الحل بعد؟',
         'أين سترتفع تكلفة الاستحواذ على العملاء بشكل غير متوقع؟',
         'ما هي عقبة التبديل التي أتجاهلها حالياً لدى العميل المستهدف؟'
+      ]
+    }
+  },
+  legal: {
+    id: 'legal',
+    name: {
+      en: 'Legal & Compliance Advisor',
+      ar: 'مستشار الشؤون القانونية وتنظيم الأعمال'
+    },
+    badge: {
+      en: 'Legal Advisor',
+      ar: 'مستشار قانوني وتنظيمي'
+    },
+    tagline: {
+      en: 'Navigates regulatory hurdles, IP protection & liability risks',
+      ar: 'يحدد التحديات التنظيمية ومتطلبات حماية الملكية الفكرية والمسؤولية'
+    },
+    recommendedModel: 'gemini-3.1-flash-lite',
+    defaultSuggestions: {
+      en: [
+        'What regulatory hurdles or licenses do we need to launch legally?',
+        'How should we structure intellectual property (IP) and founder agreements?',
+        'What data privacy and GDPR/local compliance traps must we avoid?',
+        'How do we draft robust Terms of Service and liability limits?'
+      ],
+      ar: [
+        'ما هي التراخيص والتحديات التنظيمية المطلوبة لإطلاق المشروع قانونياً؟',
+        'كيف نحمي الملكية الفكرية وننظم اتفاقيات المؤسسين؟',
+        'ما هي فخاخ خصوصية البيانات والامتثال المحلي التي يجب تجنبها؟',
+        'كيف نصيغ شروط خدمة وإخلاء مسؤولية محكمة؟'
       ]
     }
   },
@@ -119,7 +181,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Designs 48-72h falsification tests with clear quantitative thresholds',
       ar: 'يصمم اختبارات إثبات ودحض رشيقة خلال 48-72 ساعة بمعايير رقمية'
     },
-    recommendedModel: 'gemini-3.5-flash',
+    recommendedModel: 'gemini-3.5-flash-lite',
     defaultSuggestions: {
       en: [
         'Design a 48-hour pre-order landing page test with pass/fail metrics.',
@@ -180,6 +242,12 @@ const MODEL_CONFIGS: Record<GeminiModelId, { label: string; descEn: string; desc
     descEn: 'Ideal for general planning, experiment templates, and structured tasks.',
     descAr: 'مثالي للمهام العامة، وبناء قوالب التجارب، والتخطيط المنظم.'
   },
+  'gemini-3.5-flash-lite': {
+    label: 'gemini-3.5-flash-lite',
+    tag: 'Fast',
+    descEn: 'Extremely low latency for immediate responses and rapid iteration.',
+    descAr: 'أسرع نموذج للمهام الفورية والرد السريع.'
+  },
   'gemini-3.1-flash-lite': {
     label: 'gemini-3.1-flash-lite',
     tag: 'Fast',
@@ -224,12 +292,20 @@ export const AskView: React.FC<AskViewProps> = ({
     let greetingText = '';
     if (roleId === 'evaluator') {
       greetingText = isArabic
-        ? `أهلاً بك! بصفتي محلل الفرص والأدلة لـ "${title}"، أنا هنا لتقييم فرصتك بموضوعية. الفكرة مسجلة بنتيجة فرصة ${oppScore}/100، وثقة مبنية على الأدلة بنسبة ${confScore}%، وجاهزية تنفيذ ${readScore}%. اسألني عن أدلة الاستعداد للدفع، أو الفرضيات الأخطر، أو كيفية تحويل الافتراضات إلى براهين رقمية.`
-        : `Welcome! As your Evidence & Opportunity Evaluator for "${title}", I am grounded in your report data. This opportunity has an Opportunity Score of ${oppScore}/100, an Evidence Confidence of ${confScore}%, and an Execution Readiness of ${readScore}%. Ask me how to validate customer commitment, stress-test your assumptions, or turn verbal interest into empirical proof.`;
+        ? `أهلاً بك! بصفتي كبير المحللين ومقيم الفرص لـ "${title}"، أنا هنا لتقييم فرصتك بموضوعية. الفكرة مسجلة بنتيجة فرصة ${oppScore}/100، وثقة مبنية على الأدلة بنسبة ${confScore}%، وجاهزية تنفيذ ${readScore}%. اسألني عن أدلة الاستعداد للدفع، أو الفرضيات الأخطر، أو كيفية تحويل الافتراضات إلى براهين رقمية.`
+        : `Welcome! As your Principal Opportunity Evaluator for "${title}", I am grounded in your report data. This opportunity has an Opportunity Score of ${oppScore}/100, an Evidence Confidence of ${confScore}%, and an Execution Readiness of ${readScore}%. Ask me how to validate customer commitment, stress-test your assumptions, or turn verbal interest into empirical proof.`;
+    } else if (roleId === 'market') {
+      greetingText = isArabic
+        ? `مرحباً بك! بصفتي خبير السوق والنمو الاستراتيجي لـ "${title}"، أنا جاهز لتحليل شرائح السوق المستهدفة، قنوات الاستحواذ (GTM)، وبناء ميزات تنافسية صعبة التقليد. ما هو التحدي التسويقي أو التنافسي الذي ترغب في معالجته؟`
+        : `Welcome! As your Market & Growth Strategist for "${title}", I'm ready to analyze your beachhead market, acquisition loops, and competitive differentiation. What growth hurdle shall we tackle first?`;
     } else if (roleId === 'critic') {
       greetingText = isArabic
         ? `مرحباً. بصفتي مراجع المخاطر ومحامي الشيطان لـ "${title}"، مهمتي هي فحص نقاط الضعف والمخاطر القاتلة قبل أن تستثمر مواردك. دعنا نختبر عقبات التوزيع، وتسرب العملاء، وقدرة المنافسين على تدمير هامشك الربحي. ما الذي يقلقك أكثر؟`
         : `Greetings. As your Devil's Advocate & Risk Auditor for "${title}", my job is to uncover lethal failure modes, distribution bottlenecks, and competitor counter-moves before capital is deployed. Where do you suspect your business model is most vulnerable?`;
+    } else if (roleId === 'legal') {
+      greetingText = isArabic
+        ? `مرحباً! بصفتي مستشار الشؤون القانونية وتنظيم الأعمال لـ "${title}"، أنا هنا لمراجعة المتطلبات التنظيمية، استراتيجيات حماية الملكية الفكرية، شروط الخدمة، وإدارة مخاطر المسؤولية القانونية. ما هي استفساراتك القانونية أو التنظيمية؟`
+        : `Welcome! As your Legal & Compliance Advisor for "${title}", I'm here to evaluate regulatory requirements, IP protection strategies, compliance traps, and liability mitigation. What legal considerations shall we review?`;
     } else if (roleId === 'experimenter') {
       greetingText = isArabic
         ? `أهلاً بك! بصفتي مهندس التجارب الرشيقة لـ "${title}"، أساعدك في صياغة اختبارات إثبات أو دحض سريعة قابلة للتنفيذ في 48 إلى 72 ساعة بميزانية شبه معدومة. ما هي الفرضية الأكثر خطورة التي تريد اختبارها اليوم؟`
@@ -246,7 +322,7 @@ export const AskView: React.FC<AskViewProps> = ({
       text: greetingText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       roleId,
-      modelUsed: 'gemini-3.8-flash'
+      modelUsed: ROLES[roleId].recommendedModel
     };
   };
 
@@ -255,7 +331,20 @@ export const AskView: React.FC<AskViewProps> = ({
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Cycling analytical steps while waiting
+  useEffect(() => {
+    if (!isTyping) {
+      setAnalysisStep(0);
+      return;
+    }
+    const timer = setInterval(() => {
+      setAnalysisStep((prev) => (prev + 1) % 3);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [isTyping]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -362,6 +451,12 @@ export const AskView: React.FC<AskViewProps> = ({
         })
       });
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server returned non-JSON response (${response.status}): ${text.substring(0, 100)}`);
+      }
+
       const data = await response.json();
 
       if (data.ok) {
@@ -413,8 +508,12 @@ export const AskView: React.FC<AskViewProps> = ({
     switch (roleId) {
       case 'evaluator':
         return <Sparkles className="w-4 h-4" />;
+      case 'market':
+        return <Layers className="w-4 h-4" />;
       case 'critic':
         return <ShieldAlert className="w-4 h-4" />;
+      case 'legal':
+        return <Brain className="w-4 h-4" />;
       case 'experimenter':
         return <FlaskConical className="w-4 h-4" />;
       case 'economist':
@@ -666,65 +765,22 @@ export const AskView: React.FC<AskViewProps> = ({
               </div>
             </div>
 
-            {/* Second row: Active role tagline & Model selector */}
+            {/* Second row: Active role tagline */}
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                flexWrap: 'wrap',
                 gap: '8px',
                 fontSize: '11px',
                 color: 'var(--muted)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
-                  {isArabic ? currentRole.name.ar : currentRole.name.en}:
-                </span>
-                <span style={{ color: 'var(--muted)' }}>
-                  {isArabic ? currentRole.tagline.ar : currentRole.tagline.en}
-                </span>
-              </div>
-
-              {/* Model Selector Bar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '10px', color: 'var(--muted-2)' }}>
-                  {isArabic ? 'النموذج:' : 'Model:'}
-                </span>
-                <select
-                  value={activeModel}
-                  onChange={(e) => handleModelChange(e.target.value as GeminiModelId)}
-                  style={{
-                    background: 'var(--navy-2)',
-                    color: 'var(--cyan)',
-                    border: '1px solid rgba(67, 230, 210, 0.3)',
-                    borderRadius: '6px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="gemini-3.8-flash">gemini-3.8-flash (Balanced Default)</option>
-                  <option value="gemini-3.5-flash">gemini-3.5-flash (General Tasks)</option>
-                  <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Fast Execution)</option>
-                  <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Complex Tasks)</option>
-                </select>
-                {isAutoModel && (
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      color: 'var(--muted-2)',
-                      background: 'rgba(255,255,255,0.05)',
-                      padding: '2px 5px',
-                      borderRadius: '4px'
-                    }}
-                  >
-                    Auto
-                  </span>
-                )}
-              </div>
+              <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
+                {isArabic ? currentRole.name.ar : currentRole.name.en}:
+              </span>
+              <span style={{ color: 'var(--muted)' }}>
+                {isArabic ? currentRole.tagline.ar : currentRole.tagline.en}
+              </span>
             </div>
           </div>
 
@@ -806,23 +862,8 @@ export const AskView: React.FC<AskViewProps> = ({
                         }}
                       >
                         <strong style={{ color: 'var(--cyan)', fontWeight: 700 }}>
-                          {msg.roleId ? ROLES[msg.roleId]?.badge[isArabic ? 'ar' : 'en'] : 'IdeaScout AI'}
+                          {msg.roleId ? ROLES[msg.roleId]?.badge[isArabic ? 'ar' : 'en'] : (isArabic ? 'محلل الفرص الاستراتيجية' : 'Senior Opportunity Analyst')}
                         </strong>
-                        {msg.modelUsed && (
-                          <span
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              border: '1px solid var(--line)',
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                              fontFamily: 'monospace',
-                              fontSize: '9px',
-                              color: '#79c0ff'
-                            }}
-                          >
-                            {msg.modelUsed}
-                          </span>
-                        )}
                         <span style={{ marginInlineStart: 'auto', fontSize: '9px' }}>{msg.timestamp}</span>
                         <button
                           type="button"
@@ -841,9 +882,13 @@ export const AskView: React.FC<AskViewProps> = ({
                       </div>
                     )}
 
-                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '13px' }}>
-                      {msg.text}
-                    </div>
+                    {isUser ? (
+                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '13px' }}>
+                        {msg.text}
+                      </div>
+                    ) : (
+                      <StructuredResponse content={msg.text} isArabic={isArabic} />
+                    )}
 
                     {isUser && (
                       <small style={{ alignSelf: 'flex-end', fontSize: '9px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>
@@ -875,25 +920,40 @@ export const AskView: React.FC<AskViewProps> = ({
                 <div
                   style={{
                     background: 'var(--navy-3)',
-                    border: '1px solid var(--line)',
+                    border: '1px solid rgba(67, 230, 210, 0.3)',
                     borderRadius: '14px',
                     padding: '12px 18px',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
+                    flexDirection: 'column',
+                    gap: '4px',
                     fontSize: '12px',
                     color: 'var(--muted)'
                   }}
                 >
-                  <span>
-                    {isArabic
-                      ? `يقوم ${currentRole.badge.ar} بالتحليل باستخدام ${activeModel}...`
-                      : `${currentRole.badge.en} is analyzing with ${activeModel}...`}
-                  </span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse delay-150" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse delay-300" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: 'var(--cyan)', fontWeight: 600 }}>
+                      {isArabic ? currentRole.badge.ar : currentRole.badge.en}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--cyan)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="animate-pulse">✨</span>
+                      {isArabic ? 'المحلل الخبير يفكر...' : 'Senior Analyst is thinking...'}
+                    </span>
+                  </div>
+                  <div style={{ color: 'var(--ink)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    <span>
+                      {isArabic
+                        ? [
+                            `تحليل مؤشرات الفكرة وقاعدة الأدلة التجريبية...`,
+                            `تقييم ديناميكيات السوق ومخاطر الجدوى...`,
+                            `صياغة التوصيات الإستراتيجية وهندسة الحلول المخصصة...`
+                          ][analysisStep]
+                        : [
+                            `Analyzing empirical idea indicators & evidence baseline...`,
+                            `Cross-referencing market dynamics & valuation risks...`,
+                            `Synthesizing expert strategic blueprint & action items...`
+                          ][analysisStep]}
+                    </span>
                   </div>
                 </div>
               </div>

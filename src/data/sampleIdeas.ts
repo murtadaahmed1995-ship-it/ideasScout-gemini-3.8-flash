@@ -179,5 +179,6 @@ export const defaultProfile: Profile = {
   timezone: 'Asia/Dubai',
   language: 'en' as const,
   weeklyDigest: true,
-  signalAlerts: true
+  signalAlerts: true,
+  emailVerified: true
 };

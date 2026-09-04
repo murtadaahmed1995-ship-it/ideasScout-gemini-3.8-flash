@@ -200,6 +200,7 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
         {/* Opportunity Score + Trend Indicator */}
         <div className="opportunity-score-group">
           <div
+            key={idea.opportunityScore}
             className="score-ring score-ring-small"
             style={{ ['--score' as any]: `${idea.opportunityScore * 3.6}deg` }}
           >

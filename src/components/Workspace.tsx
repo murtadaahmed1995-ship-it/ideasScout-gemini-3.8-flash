@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Idea, Profile, Stage, WorkspaceView } from '../types';
 import { Brand } from './Brand';
 import { Glyph } from './Glyph';
@@ -16,11 +16,13 @@ interface WorkspaceProps {
   ideas: Idea[];
   profile: Profile;
   onUpdateProfile: (updated: Profile) => void;
-  onSaveNewIdea: (ideaData: any) => void;
+  onSaveNewIdea: (ideaData: any) => any;
   onArchiveIdea: (id: string) => void;
   onBulkArchiveIdeas?: (ids: string[]) => void;
   onUpdateIdeaTags?: (id: string, tags: string[]) => void;
   initialView?: WorkspaceView;
+  initialDescription?: string;
+  initialStage?: Stage;
 }
 
 export const Workspace: React.FC<WorkspaceProps> = ({
@@ -35,6 +37,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   onBulkArchiveIdeas,
   onUpdateIdeaTags,
   initialView = 'dashboard',
+  initialDescription,
+  initialStage,
 }) => {
   const isArabic = language === 'ar';
   const [currentView, setCurrentView] = useState<WorkspaceView>(initialView);
@@ -43,14 +47,55 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   // Prefer selecting a real user idea over a demo sample on initial load
   const initialUserIdea = ideas.find((i) => !i.isSample) ?? ideas[0];
   const [selectedIdeaId, setSelectedIdeaId] = useState<string>(initialUserIdea?.id ?? '');
+  const [selectedReportId, setSelectedReportId] = useState<string>('latest');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const selectedIdea = ideas.find((i) => i.id === selectedIdeaId) ?? initialUserIdea ?? ideas[0];
+
+  // Strict tuple check for (ideaId, reportId)
+  const isIdeaValid = ideas.some((i) => i.id === selectedIdeaId);
+  const isReportValid = isIdeaValid && (
+    selectedReportId === 'latest' ||
+    (selectedIdea?.evolution && selectedIdea.evolution.some((s) => s.id === selectedReportId)) ||
+    Boolean(selectedIdea?.latestAnalysis)
+  );
+  const isTupleValid = isIdeaValid && isReportValid;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3200);
   };
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Escape to close mobile menu or blur inputs
+      if (e.key === 'Escape') {
+        if (isMobileMenuOpen) {
+          setIsMobileMenuOpen(false);
+        }
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }
+
+      // Ctrl/Cmd + K to focus vault search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        if (currentView !== 'vault') {
+          setCurrentView('vault');
+          setTimeout(() => {
+            document.getElementById('vault-search-input')?.focus();
+          }, 50);
+        } else {
+          document.getElementById('vault-search-input')?.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isMobileMenuOpen, currentView]);
 
   const navItems = [
     { view: 'dashboard' as const, icon: 'grid', en: 'Dashboard', ar: 'لوحة التحكم' },
@@ -70,8 +115,9 @@ export const Workspace: React.FC<WorkspaceProps> = ({
     profile: { en: 'Profile & Preferences', ar: 'الملف والتفضيلات' }
   };
 
-  const handleSelectIdea = (idea: Idea, targetView?: WorkspaceView) => {
+  const handleSelectIdea = (idea: Idea, targetView?: WorkspaceView, reportId: string = 'latest') => {
     setSelectedIdeaId(idea.id);
+    setSelectedReportId(reportId);
     if (targetView) {
       setCurrentView(targetView);
     }
@@ -209,7 +255,20 @@ export const Workspace: React.FC<WorkspaceProps> = ({
               <strong style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', display: 'block', overflow: 'hidden' }}>
                 {profile.name}
               </strong>
-              <small style={{ color: 'var(--muted)', fontSize: '0.75rem' }}>{profile.role}</small>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                <span style={{
+                  background: 'rgba(67, 230, 210, 0.15)',
+                  color: 'var(--cyan)',
+                  border: '1px solid rgba(67, 230, 210, 0.3)',
+                  padding: '1px 8px',
+                  borderRadius: '10px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
+                }}>
+                  {profile.role}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -218,8 +277,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
       {/* Main Area */}
       <div className="app-main">
         {/* Topbar */}
-        <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <header className="topbar" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button
               type="button"
               className="mobile-menu-button"
@@ -228,18 +287,37 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             >
               <Glyph name="menu" />
             </button>
-            <div className="topbar-title">
-              <span className="topbar-path">
-                IDEASCOUT / {currentView.toUpperCase()}
+            <div className="topbar-title" style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+              <span className="topbar-path" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                {isArabic ? 'مساحة العمل' : 'WORKSPACE'} <span style={{ opacity: 0.5 }}>/</span> {isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en}
               </span>
-              <h1>{isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en}</h1>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text-color)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                {['report', 'analyze', 'ask'].includes(currentView) && selectedIdea 
+                  ? (isArabic ? selectedIdea.title.ar : selectedIdea.title.en) 
+                  : (isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en)}
+              </h1>
             </div>
           </div>
 
-          <div className="topbar-actions">
+          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {selectedIdea && (currentView === 'report' || currentView === 'vault' || currentView === 'ask') && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsShareModalOpen(true)}
+                title={isArabic ? 'مشاركة التقرير' : 'Share Report'}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--primary)', color: 'var(--primary)', padding: '0.4rem 0.75rem' }}
+              >
+                <Glyph name="share" />
+                <span className="hidden sm:inline" style={{ fontWeight: 600 }}>
+                  {isArabic ? 'مشاركة' : 'Share'}
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
-              className="btn btn-outline"
+              className="btn btn-secondary"
               onClick={onReturnToLanding}
               title={isArabic ? 'العودة لصفحة التعريف' : 'Return to Landing Page'}
             >
@@ -285,17 +363,44 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             <AnalyzeView
               isArabic={isArabic}
               onSaveAnalysis={handleSaveAnalysis}
+              initialDescription={initialDescription}
+              initialStage={initialStage}
             />
           )}
 
-          {currentView === 'report' && selectedIdea && (
-            <ReportView
-              isArabic={isArabic}
-              idea={selectedIdea}
-              onNavigate={setCurrentView}
-              onUpdateIdea={() => setCurrentView('analyze')}
-              onAskAboutIdea={() => setCurrentView('ask')}
-            />
+          {currentView === 'report' && (
+            isTupleValid && selectedIdea ? (
+              <ReportView
+                isArabic={isArabic}
+                idea={selectedIdea}
+                onNavigate={setCurrentView}
+                onUpdateIdea={() => setCurrentView('analyze')}
+                onAskAboutIdea={() => setCurrentView('ask')}
+              />
+            ) : (
+              <div className="empty-state" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+                <Glyph name="signal" />
+                <h2>{isArabic ? 'تعذر حل أو مطابقة تقرير الذكاء' : 'Intelligence Report Resolution Failed'}</h2>
+                <p style={{ color: 'var(--muted)', maxWidth: '420px', margin: '0.75rem auto 1.5rem' }}>
+                  {isArabic
+                    ? 'فشل التحقق من صحة زوج المعرفات (ideaId, reportId). قد تكون الفكرة أو التقرير المطلوب غير موجودين أو غير متطابقين.'
+                    : 'The strict tuple validation for (ideaId, reportId) failed. The requested report could not be securely matched to the active idea portfolio.'}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    if (ideas.length > 0) {
+                      setSelectedIdeaId(ideas[0].id);
+                      setSelectedReportId('latest');
+                    }
+                    setCurrentView('vault');
+                  }}
+                >
+                  {isArabic ? 'العودة إلى خزنة الأفكار' : 'Return to Idea Vault'}
+                </button>
+              </div>
+            )
           )}
 
           {currentView === 'vault' && (
@@ -355,6 +460,64 @@ export const Workspace: React.FC<WorkspaceProps> = ({
         <div className="toast">
           <Glyph name="check" />
           <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {isShareModalOpen && selectedIdea && (
+        <div className="dialog-overlay">
+          <div className="dialog-content share-modal">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 600 }}>
+                {isArabic ? 'مشاركة التقرير' : 'Share Intelligence Report'}
+              </h2>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ border: 'none', padding: '0.25rem' }}
+                onClick={() => setIsShareModalOpen(false)}
+              >
+                <Glyph name="trash" />
+              </button>
+            </div>
+            
+            <p style={{ color: 'var(--muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              {isArabic 
+                ? 'شارك هذا الرابط مع فريقك أو المستثمرين للوصول إلى تحليل الفكرة.' 
+                : 'Share this secure link with your team or investors to access the idea analysis.'}
+            </p>
+            
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <input 
+                type="text" 
+                readOnly 
+                value={`https://ideascout.app/share/${selectedIdea.id.substring(0, 8)}`} 
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}
+              />
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://ideascout.app/share/${selectedIdea.id.substring(0, 8)}`);
+                  showToast(isArabic ? 'تم نسخ الرابط!' : 'Link copied to clipboard!');
+                  setIsShareModalOpen(false);
+                }}
+              >
+                {isArabic ? 'نسخ' : 'Copy'}
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <a 
+                href={`mailto:?subject=${encodeURIComponent(`IdeaScout Report: ${isArabic ? selectedIdea.title.ar : selectedIdea.title.en}`)}&body=${encodeURIComponent(`Check out this idea analysis report on IdeaScout:\n\nhttps://ideascout.app/share/${selectedIdea.id.substring(0, 8)}`)}`}
+                className="btn btn-secondary"
+                style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
+                onClick={() => setIsShareModalOpen(false)}
+              >
+                <Glyph name="mail" />
+                {isArabic ? 'إرسال عبر البريد' : 'Email Link'}
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>

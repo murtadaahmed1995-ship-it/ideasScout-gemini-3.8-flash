@@ -1,20 +1,78 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Brand } from './Brand';
 import { Glyph } from './Glyph';
 
 interface LandingPageProps {
-  onOpenWorkspace: (openAnalyze?: boolean) => void;
+  onOpenWorkspace: (target?: 'dashboard' | 'analyze' | 'vault' | boolean) => void;
   language: 'en' | 'ar';
   onToggleLanguage: () => void;
+  onOpenSignIn: () => void;
+  onOpenRegister: () => void;
+  onQuickAnalyze: (ideaText: string, stage: string) => void;
 }
+
+const TestimonialCard = ({ videoSrc, author, role, quote }: { videoSrc: string, author: string, role: string, quote: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (videoRef.current) {
+      playPromiseRef.current = videoRef.current.play();
+      if (playPromiseRef.current !== undefined) {
+        playPromiseRef.current.catch(() => { /* ignore */ });
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (videoRef.current) {
+      if (playPromiseRef.current !== undefined && playPromiseRef.current !== null) {
+        playPromiseRef.current.then(() => {
+          videoRef.current?.pause();
+        }).catch(() => { /* ignore */ });
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+
+  return (
+    <div 
+      className="video-testimonial-card"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <video 
+        ref={videoRef}
+        loop 
+        muted 
+        playsInline
+        preload="metadata"
+        src={videoSrc}
+      />
+      <div className="video-testimonial-overlay">
+        <h3 className="text-xl font-bold text-white mb-1">{author}</h3>
+        <p className="text-sm font-medium" style={{ color: 'var(--cyan)' }}>{role}</p>
+        <p className="text-sm mt-3 line-clamp-3 leading-relaxed" style={{ color: 'var(--muted)' }}>
+          {quote}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenWorkspace,
   language,
   onToggleLanguage,
+  onOpenSignIn,
+  onOpenRegister,
+  onQuickAnalyze,
 }) => {
   const isArabic = language === 'ar';
   const [activeDna, setActiveDna] = useState(0);
+  const [quickIdeaText, setQuickIdeaText] = useState('');
+  const [quickStage, setQuickStage] = useState<'Concept' | 'MVP' | 'Growth'>('Concept');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -89,7 +147,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           aria-label="IdeaScout home"
         >
-          <Brand />
+          <Brand wordClassName="landing-header-brand-word" />
         </button>
 
         <nav className="marketing-links">
@@ -111,10 +169,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </button>
           <button
             type="button"
-            className="btn btn-primary"
-            onClick={() => onOpenWorkspace(true)}
+            className="text-button"
+            onClick={onOpenSignIn}
+            style={{ fontSize: '12px', padding: '6px 12px' }}
           >
-            {isArabic ? 'حلّل فكرتك' : 'Analyze your idea'}
+            {isArabic ? 'تسجيل الدخول' : 'Sign In'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onOpenRegister}
+            style={{ fontSize: '12px', padding: '6px 12px' }}
+          >
+            {isArabic ? 'حساب جديد' : 'Register'}
           </button>
         </nav>
       </header>
@@ -122,7 +189,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Main Marketing Sections */}
       <main>
         {/* Hero Section */}
-        <section className="hero-section">
+        <section className="hero-section custom-hero-enhancement">
           <div className="hero-ambient hero-ambient-one" />
           <div className="hero-ambient hero-ambient-two" />
 
@@ -158,37 +225,135 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </a>
             </div>
 
-            <div className="trust-row">
-              <span>
-                <Glyph name="check" />
-                {isArabic ? 'لا تحتاج بطاقة' : 'No card required'}
-              </span>
-              <span>
-                <Glyph name="check" />
-                {isArabic ? 'لا نخترع أدلة مفقودة' : 'Missing evidence stays missing'}
-              </span>
-              <span>
-                <Glyph name="check" />
-                {isArabic ? 'أداة قرار وليست ضماناً' : 'Decision support, not guarantees'}
-              </span>
+            {/* Quick Idea Analyzer Glassmorphic Widget */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(16, 26, 52, 0.85), rgba(9, 15, 32, 0.95))',
+              border: '1px solid rgba(67, 230, 210, 0.35)',
+              borderRadius: '20px',
+              padding: '22px',
+              marginTop: '24px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              textAlign: isArabic ? 'right' : 'left'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="panel-kicker" style={{ color: 'var(--cyan)' }}>
+                  {isArabic ? 'تحليل سريع للفكرة (Quick Idea Analyzer)' : 'QUICK IDEA ANALYZER'}
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--cyan)', background: 'rgba(67,230,210,0.15)', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>
+                  {isArabic ? 'ذكاء اصطناعي فوري' : 'Instant AI'}
+                </span>
+              </div>
+
+              <textarea
+                rows={3}
+                value={quickIdeaText}
+                onChange={(e) => setQuickIdeaText(e.target.value)}
+                placeholder={isArabic ? 'اكتب فكرتك أو فرضيتك هنا باختصار (مثلاً: منصة توظيف ذكية للمستقلين في الشرق الأوسط...)' : 'Type your startup or product idea here (e.g. AI-powered recruitment platform for MENA freelancers...)'}
+                style={{
+                  width: '100%',
+                  background: 'rgba(11, 19, 41, 0.8)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  color: '#fff',
+                  fontSize: '13px',
+                  resize: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {(['Concept', 'MVP', 'Growth'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setQuickStage(s)}
+                      style={{
+                        background: quickStage === s ? 'var(--cyan)' : 'rgba(255,255,255,0.05)',
+                        color: quickStage === s ? '#0b1329' : 'var(--muted)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {s === 'Concept' ? (isArabic ? 'فكرة / مفهوم' : 'Concept') : s === 'MVP' ? (isArabic ? 'نموذج أولي' : 'MVP') : (isArabic ? 'نمو وتوسع' : 'Growth')}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    onQuickAnalyze(quickIdeaText.trim(), quickStage);
+                  }}
+                  style={{ padding: '10px 18px', fontSize: '13px' }}
+                >
+                  <span>{isArabic ? 'حلّل فكرتك الآن ↗' : 'Analyze your idea ↗'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="landing-feature-glow-banner">
+              <div className="glow-banner-header">
+                <span className="glow-pulse-dot" />
+                <strong>{isArabic ? 'ضمانات المنصة الأساسية' : 'PLATFORM GUARANTEES'}</strong>
+              </div>
+              <div className="trust-row">
+                <span className="trust-badge-glow">
+                  <Glyph name="check" />
+                  {isArabic ? 'لا تحتاج بطاقة' : 'No card required'}
+                </span>
+                <span className="trust-badge-glow">
+                  <Glyph name="check" />
+                  {isArabic ? 'لا نخترع أدلة مفقودة' : 'Missing evidence stays missing'}
+                </span>
+                <span className="trust-badge-glow">
+                  <Glyph name="check" />
+                  {isArabic ? 'أداة قرار وليست ضماناً' : 'Decision support, not guarantees'}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Hero Product Window Simulation */}
-          <div className="hero-product">
-            <div className="product-window">
-              <div className="window-top">
-                <div className="window-dots">
-                  <i />
-                  <i />
-                  <i />
+          <div className="hero-product group cursor-pointer" onClick={() => onOpenWorkspace('vault')}>
+            <div className="product-window transition-all duration-300 group-hover:border-[#43e6d2] group-hover:shadow-[0_20px_50px_rgba(67,230,210,0.25)]">
+              <div className="window-top flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="window-dots">
+                    <i />
+                    <i />
+                    <i />
+                  </div>
+                  <span>
+                    {isArabic ? 'سير عمل مبني على الأدلة' : 'EVIDENCE-AWARE WORKFLOW'}
+                  </span>
                 </div>
-                <span>
-                  {isArabic ? 'سير عمل مبني على الأدلة' : 'EVIDENCE-AWARE WORKFLOW'}
-                </span>
-                <span className="demo-label">
-                  {isArabic ? 'المنتج' : 'PRODUCT'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="demo-label animate-pulse">
+                    {isArabic ? 'انقر للاستعراض ↗' : 'CLICK TO EXPLORE ↗'}
+                  </span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenWorkspace('vault');
+                    }}
+                    className="px-3 py-1 text-xs font-bold rounded-lg bg-[#43e6d2] text-[#031318] hover:bg-[#77f0e2] transition-colors shadow-[0_0_15px_rgba(67,230,210,0.4)]"
+                  >
+                    {isArabic ? 'تقرير الخزنة' : 'Cabinet Report'}
+                  </button>
+                </div>
               </div>
 
               <div className="window-body">
@@ -247,32 +412,72 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
                   </div>
 
-                  <div className="preview-separation">
-                    <span>
+                  <div className="preview-separation flex items-center justify-between flex-wrap gap-4">
+                    <div>
                       <small>
                         {isArabic ? 'جاهزية المدخلات' : 'INPUT READINESS'}
                       </small>
                       <strong>
                         {isArabic ? 'معلومات كافية للتحليل' : 'Enough to analyze'}
                       </strong>
-                    </span>
-                    <span>
+                    </div>
+                    <div>
                       <small>
                         {isArabic ? 'نتيجة الفرصة' : 'OPPORTUNITY SCORE'}
                       </small>
                       <strong>
                         {isArabic ? 'تُحسب بعد الإجابات' : 'Calculated after answers'}
                       </strong>
-                    </span>
-                    <span>
+                    </div>
+                    <div>
                       <small>{isArabic ? 'الثقة' : 'CONFIDENCE'}</small>
                       <strong>
                         {isArabic ? 'ترتفع مع الأدلة' : 'Rises with evidence'}
                       </strong>
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Veo Video Testimonials Section */}
+        <section className="py-24 px-6 relative z-10" style={{ background: 'var(--bg-color)', borderBottom: '1px solid var(--line)' }}>
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider uppercase rounded-full border" style={{ color: 'var(--cyan)', borderColor: 'var(--cyan)', backgroundColor: 'rgba(67, 230, 210, 0.1)' }}>
+                {isArabic ? 'مدعوم من Veo' : 'Powered by Veo'}
+              </span>
+              <h2 className="text-3xl md:text-5xl font-bold mb-4" style={{ color: 'var(--ink)' }}>
+                {isArabic ? 'قصص الأثر المثبت والنجاح التعليمي المُلهم' : 'Validated Impact & Educational Success Stories'}
+              </h2>
+              <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted)' }}>
+                {isArabic 
+                  ? 'اكتشف كيف ساعدت منصتنا المؤسسين وقادة التعليم في التحقق من أفكارهم وتحقيق تأثير إيجابي حقيقي.' 
+                  : 'Discover how our platform helped founders and education leaders validate their ideas and drive meaningful impact.'}
+              </p>
+            </div>
+
+            <div className="video-testimonials-grid">
+              <TestimonialCard 
+                videoSrc="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+                author="Sarah Jenkins"
+                role={isArabic ? 'مديرة مدرسة ابتدائية ومربية' : 'Elementary School Principal & Educator'}
+                quote={isArabic ? '"إن أفضل نهج في المدرسة الابتدائية هو استخدام مقاطع الفيديو التحفيزية المهنية. إنها مفيدة ومجشعة للغاية، وقد ساعدنا IdeaScout في التحقق من هذا النموذج التعليمي بوضوح تام."' : '"The best approach in elementary school is to use professional motivational videos. It is truly helpful and encouraging, and IdeaScout helped us validate this exact learning model with absolute clarity."'}
+              />
+              <TestimonialCard 
+                videoSrc="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+                author="Marcus Chen"
+                role={isArabic ? 'رائد أعمال تقني ومؤسس منصة تعليمية' : 'EdTech Founder & Innovator'}
+                quote={isArabic ? '"اكتسبت الثقة لإطلاق منصتنا التعليمية بعد التحقق من كل الافتراضات المرتبطة بتفاعل الطلاب وتحفيزهم بصرياً."' : '"Gained the confidence to launch our EdTech platform after validating all core assumptions regarding student engagement and visual motivation."'}
+              />
+              <TestimonialCard 
+                videoSrc="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+                author="Elena Rodriguez"
+                role={isArabic ? 'مديرة الابتكار المدرسي' : 'School Innovation Director'}
+                quote={isArabic ? '"التحليل السريع وتقدير الأثر كان دقيقاً بشكل لا يصدق ووجهنا نحو تطبيق النهج التحفيزي الصحيح داخل الفصول."' : '"The rapid analysis and impact estimation was incredibly accurate and steered us toward implementing the right motivational approach in classrooms."'}
+              />
             </div>
           </div>
         </section>
@@ -319,16 +524,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          <div className="signal-copy-grid landing-principles">
-            {methodologyPrinciples.map(([letter, ruleTitle, ruleCopy]) => (
-              <article key={letter}>
-                <span>{letter}</span>
-                <div>
-                  <h3>{ruleTitle}</h3>
-                  <p>{ruleCopy}</p>
-                </div>
-              </article>
-            ))}
+          <div className="landing-feature-glow-banner my-8">
+            <div className="glow-banner-header">
+              <span className="glow-pulse-dot" />
+              <strong>{isArabic ? 'معايير الأدلة والنزاهة الحية' : 'LIVE EVIDENCE & INTEGRITY STANDARDS'}</strong>
+            </div>
+            <div className="signal-copy-grid landing-principles mt-4">
+              {methodologyPrinciples.map(([letter, ruleTitle, ruleCopy]) => (
+                <article key={letter} className="landing-evidence-card-glow">
+                  <span className="evidence-letter-badge">{letter}</span>
+                  <div>
+                    <h3>{ruleTitle}</h3>
+                    <p>{ruleCopy}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -365,8 +576,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <Brand />
         <p>
           {isArabic
-            ? 'ذكاء قرار عملي للمؤسسين.'
-            : 'Practical decision intelligence for founders.'}
+            ? 'من شرارة الفكرة إلى يقين السوق — ابنِ ما يهم حقاً.'
+            : 'From raw spark to market certainty—build what matters.'}
         </p>
         <span>© 2026 IdeaScout</span>
       </footer>

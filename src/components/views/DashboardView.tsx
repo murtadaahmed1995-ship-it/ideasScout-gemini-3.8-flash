@@ -1,6 +1,7 @@
 import React from 'react';
 import { Idea, Profile, WorkspaceView } from '../../types';
 import { Glyph } from '../Glyph';
+import { AnimatedCounter } from '../AnimatedCounter';
 
 interface DashboardViewProps {
   isArabic: boolean;
@@ -101,8 +102,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   );
 
   const topIdea = [...displayIdeas].sort((a, b) => b.opportunityScore - a.opportunityScore)[0];
-  const lastSnap = topIdea.evolution.at(-1);
-  const prevSnap = topIdea.evolution.at(-2);
+  const evolutionList = topIdea?.evolution || [];
+  const lastSnap = evolutionList.at(-1);
+  const prevSnap = evolutionList.at(-2);
   const scoreDelta = lastSnap && prevSnap ? lastSnap.opportunityScore - prevSnap.opportunityScore : 0;
 
   return (
@@ -136,7 +138,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <span>{isArabic ? 'الأفكار النشطة' : 'ACTIVE IDEAS'}</span>
-            <strong>{displayIdeas.length}</strong>
+            <strong><AnimatedCounter value={displayIdeas.length} /></strong>
             <small>{isArabic ? 'بياناتك فقط' : 'Your data only'}</small>
           </div>
         </article>
@@ -147,7 +149,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <span>{isArabic ? 'متوسط الفرصة' : 'AVG. OPPORTUNITY'}</span>
-            <strong>{avgOpportunity}</strong>
+            <strong><AnimatedCounter value={avgOpportunity} /></strong>
             <small>{isArabic ? 'مساعد قرار' : 'Decision aid'}</small>
           </div>
         </article>
@@ -158,7 +160,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <span>{isArabic ? 'التحليلات المكتملة' : 'ANALYSES COMPLETED'}</span>
-            <strong>{totalSnapshots}</strong>
+            <strong><AnimatedCounter value={totalSnapshots} /></strong>
             <small>{isArabic ? 'تشمل إعادة التحليل' : 'Includes re-analysis'}</small>
           </div>
         </article>
@@ -169,7 +171,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <span>{isArabic ? 'متوسط الثقة' : 'AVG. CONFIDENCE'}</span>
-            <strong>{avgConfidence}%</strong>
+            <strong><AnimatedCounter value={avgConfidence} suffix="%" /></strong>
             <small>{isArabic ? 'ترتفع مع الأدلة' : 'Evidence-sensitive'}</small>
           </div>
         </article>
@@ -198,11 +200,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="opportunity-body">
             <div
+              key={topIdea.opportunityScore}
               className="score-ring score-ring-large"
               style={{ ['--score' as any]: `${topIdea.opportunityScore * 3.6}deg` }}
             >
               <div className="score-ring-inner">
-                <strong>{topIdea.opportunityScore}</strong>
+                <strong><AnimatedCounter value={topIdea.opportunityScore} /></strong>
                 <span>{isArabic ? 'الفرصة' : 'Opportunity'}</span>
               </div>
             </div>
@@ -211,8 +214,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="status-badge status-strong">
                 <i />
                 {isArabic
-                  ? `ثقة ${topIdea.confidence}%`
-                  : `${topIdea.confidence}% confidence`}
+                  ? `ثقة `
+                  : ``}
+                <AnimatedCounter value={topIdea.confidence} suffix="%" />
+                {isArabic ? '' : ' confidence'}
               </span>
               <p>
                 {isArabic
@@ -220,7 +225,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   : topIdea.latestAnalysis.summary.en}
               </p>
               <div className="signal-chips">
-                {topIdea.latestAnalysis.strongestSignals.slice(0, 3).map((s) => (
+                {(topIdea.latestAnalysis?.strongestSignals || []).slice(0, 3).map((s) => (
                   <span key={s.label.en}>
                     {isArabic ? s.label.ar : s.label.en}
                   </span>
@@ -262,7 +267,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="dimension-list compact-dimensions">
-            {topIdea.latestAnalysis.dimensions.map((d) => (
+            {(topIdea.latestAnalysis?.dimensions || []).map((d) => (
               <div key={d.key} className="dimension-row">
                 <div>
                   <span>{isArabic ? d.label.ar : d.label.en}</span>
@@ -298,11 +303,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="evolution-chart">
             <div className="bar-area">
-              {topIdea.evolution.map((snap, idx) => (
+              {evolutionList.map((snap, idx) => (
                 <div key={snap.id} className="bar-column">
                   <i
                     style={{ height: `${snap.opportunityScore}%` }}
-                    className={idx === topIdea.evolution.length - 1 ? 'active' : ''}
+                    className={idx === evolutionList.length - 1 ? 'active' : ''}
                   />
                   <span>{snap.opportunityScore}</span>
                 </div>
@@ -365,7 +370,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <button
               key={item.id}
               type="button"
-              onClick={() => onSelectIdea(item, 'report')}
+              onClick={() => onSelectIdea(item, 'vault')}
             >
               <span className="idea-monogram">
                 {getMonogram(isArabic ? item.title.ar : item.title.en)}

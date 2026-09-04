@@ -131,4 +131,6 @@ export interface Profile {
   language: 'en' | 'ar';
   weeklyDigest: boolean;
   signalAlerts: boolean;
+  avatarUrl?: string;
+  emailVerified?: boolean;
 }

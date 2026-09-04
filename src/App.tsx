@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { Workspace } from './components/Workspace';
+import { AuthView } from './components/AuthView';
 import { defaultProfile, initialIdeas } from './data/sampleIdeas';
 import { Idea, Profile, WorkspaceView } from './types';
 import { evaluateIdea } from './utils/engine';
@@ -8,6 +9,10 @@ import { evaluateIdea } from './utils/engine';
 export default function App() {
   const [mode, setMode] = useState<'landing' | 'workspace'>('landing');
   const [workspaceInitialView, setWorkspaceInitialView] = useState<WorkspaceView>('dashboard');
+  const [initialAnalyzeDescription, setInitialAnalyzeDescription] = useState('');
+  const [initialAnalyzeStage, setInitialAnalyzeStage] = useState<any>('Concept');
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   const [language, setLanguage] = useState<'en' | 'ar'>(() => {
     const saved = localStorage.getItem('ideascout_lang');
@@ -69,8 +74,23 @@ export default function App() {
     setLanguage((prev) => (prev === 'en' ? 'ar' : 'en'));
   };
 
-  const handleOpenWorkspace = (openAnalyze: boolean = false) => {
-    setWorkspaceInitialView(openAnalyze ? 'analyze' : 'dashboard');
+  const handleQuickAnalyze = (ideaText: string, stage: string) => {
+    setInitialAnalyzeDescription(ideaText);
+    setInitialAnalyzeStage(stage);
+    setWorkspaceInitialView('analyze');
+    setMode('workspace');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const handleOpenWorkspace = (target: 'dashboard' | 'analyze' | 'vault' | boolean = 'dashboard') => {
+    let view: WorkspaceView = 'dashboard';
+    if (target === true || target === 'analyze') {
+      view = 'analyze';
+    } else if (target === 'vault') {
+      view = 'vault';
+    } else if (typeof target === 'string') {
+      view = target as WorkspaceView;
+    }
+    setWorkspaceInitialView(view);
     setMode('workspace');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -144,6 +164,9 @@ export default function App() {
           language={language}
           onToggleLanguage={handleToggleLanguage}
           onOpenWorkspace={handleOpenWorkspace}
+          onOpenSignIn={() => setIsSignInOpen(true)}
+          onOpenRegister={() => setIsRegisterOpen(true)}
+          onQuickAnalyze={handleQuickAnalyze}
         />
       ) : (
         <Workspace
@@ -162,8 +185,34 @@ export default function App() {
           onBulkArchiveIdeas={handleBulkArchiveIdeas}
           onUpdateIdeaTags={handleUpdateIdeaTags}
           initialView={workspaceInitialView}
+          initialDescription={initialAnalyzeDescription}
+          initialStage={initialAnalyzeStage}
         />
       )}
+
+      <AuthView
+        isOpen={isSignInOpen}
+        onClose={() => setIsSignInOpen(false)}
+        onSuccess={(updated) => {
+          setProfile(updated);
+          handleOpenWorkspace('dashboard');
+        }}
+        isArabic={language === 'ar'}
+        currentProfile={profile}
+        initialMode="signin"
+      />
+
+      <AuthView
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+        onSuccess={(updated) => {
+          setProfile(updated);
+          handleOpenWorkspace('dashboard');
+        }}
+        isArabic={language === 'ar'}
+        currentProfile={profile}
+        initialMode="register"
+      />
     </div>
   );
 }
