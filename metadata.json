@@ -1,0 +1,6 @@
+{
+  "name": "IdeaScout",
+  "description": "Structured opportunity intelligence to clarify assumptions, evaluate evidence, and choose the next best action.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
