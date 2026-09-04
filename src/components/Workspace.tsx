@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Idea, Profile, Stage, WorkspaceView } from '../types';
 import { Brand } from './Brand';
 import { Glyph } from './Glyph';
+import { Sun, Moon } from 'lucide-react';
 import { AnalyzeView } from './views/AnalyzeView';
 import { AskView } from './views/AskView';
 import { DashboardView } from './views/DashboardView';
@@ -12,6 +13,8 @@ import { VaultView } from './views/VaultView';
 interface WorkspaceProps {
   language: 'en' | 'ar';
   onToggleLanguage: () => void;
+  theme: 'navy' | 'light';
+  onToggleTheme: () => void;
   onReturnToLanding: () => void;
   ideas: Idea[];
   profile: Profile;
@@ -28,6 +31,8 @@ interface WorkspaceProps {
 export const Workspace: React.FC<WorkspaceProps> = ({
   language,
   onToggleLanguage,
+  theme,
+  onToggleTheme,
   onReturnToLanding,
   ideas,
   profile,
@@ -333,6 +338,26 @@ export const Workspace: React.FC<WorkspaceProps> = ({
               onClick={onToggleLanguage}
             >
               {isArabic ? 'EN' : 'العربية'}
+            </button>
+
+            <button
+              type="button"
+              className="language-button inline-flex items-center gap-1.5"
+              onClick={onToggleTheme}
+              title={isArabic ? 'تبديل المظهر (داكن / فاتح)' : 'Toggle Theme (Navy / Light)'}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-slate-700" />
+                  <span>{isArabic ? 'داكن' : 'Navy'}</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-[var(--cyan)]" />
+                  <span>{isArabic ? 'فاتح' : 'Light'}</span>
+                </>
+              )}
             </button>
 
             <button

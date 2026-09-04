@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+:root {
+  --bg-color: #030c18;
+  --navy-1: #06111f;
+  --navy-2: #081a2e;
+  --line: rgba(128, 164, 199, 0.18);
+  --line-strong: rgba(128, 164, 199, 0.35);
+  --ink: #ffffff;
+  --muted: #8ba2be;
+  --muted-2: #657f9e;
+  --cyan: #43e6d2;
+  --blue: #1d9bf0;
+  --card-bg: #06111f;
+  --border-color: rgba(128, 164, 199, 0.18);
+  --text-color: #ffffff;
+}
+
+html.light-theme {
+  --bg-color: #f4f6f9;
+  --navy-1: #ffffff;
+  --navy-2: #e2e8f0;
+  --line: #cbd5e1;
+  --line-strong: #94a3b8;
+  --ink: #0f172a;
+  --muted: #475569;
+  --muted-2: #64748b;
+  --cyan: #0d9488;
+  --blue: #0284c7;
+  --card-bg: #ffffff;
+  --border-color: #cbd5e1;
+  --text-color: #0f172a;
+}
+
 /* Base input styles for mobile zooming prevention */
 @layer base {
   input, textarea, select {
@@ -1824,5 +1856,41 @@
   font-size: 14px;
   box-shadow: 0 0 12px rgba(67, 230, 210, 0.2);
   flex-shrink: 0;
+}
+
+/* Animated Readiness & Opportunity Score Bars during load */
+.readiness-track i {
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  height: 100%;
+  display: block;
+  animation: loadReadinessBar 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left;
+}
+
+@keyframes loadReadinessBar {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.score-ring {
+  animation: loadScoreRing 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes loadScoreRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 

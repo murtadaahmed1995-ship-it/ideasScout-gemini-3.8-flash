@@ -19,6 +19,11 @@ export default function App() {
     return saved === 'ar' ? 'ar' : 'en';
   });
 
+  const [theme, setTheme] = useState<'navy' | 'light'>(() => {
+    const saved = localStorage.getItem('ideascout_theme');
+    return saved === 'light' ? 'light' : 'navy';
+  });
+
   const [ideas, setIdeas] = useState<Idea[]>(() => {
     try {
       const saved = localStorage.getItem('ideascout_ideas');
@@ -52,6 +57,16 @@ export default function App() {
     localStorage.setItem('ideascout_lang', language);
   }, [language]);
 
+  // Sync theme class
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('ideascout_theme', theme);
+  }, [theme]);
+
   // Persist ideas
   useEffect(() => {
     try {
@@ -72,6 +87,10 @@ export default function App() {
 
   const handleToggleLanguage = () => {
     setLanguage((prev) => (prev === 'en' ? 'ar' : 'en'));
+  };
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'navy' ? 'light' : 'navy'));
   };
 
   const handleQuickAnalyze = (ideaText: string, stage: string) => {
@@ -163,6 +182,8 @@ export default function App() {
         <LandingPage
           language={language}
           onToggleLanguage={handleToggleLanguage}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
           onOpenWorkspace={handleOpenWorkspace}
           onOpenSignIn={() => setIsSignInOpen(true)}
           onOpenRegister={() => setIsRegisterOpen(true)}
@@ -173,6 +194,8 @@ export default function App() {
           key={workspaceInitialView}
           language={language}
           onToggleLanguage={handleToggleLanguage}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
           onReturnToLanding={() => {
             setMode('landing');
             window.scrollTo({ top: 0, behavior: 'smooth' });

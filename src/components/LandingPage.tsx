@@ -1,46 +1,78 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Brand } from './Brand';
 import { Glyph } from './Glyph';
+import { FAQSection } from './FAQSection';
+import { Sun, Moon } from 'lucide-react';
 
 interface LandingPageProps {
   onOpenWorkspace: (target?: 'dashboard' | 'analyze' | 'vault' | boolean) => void;
   language: 'en' | 'ar';
   onToggleLanguage: () => void;
+  theme: 'navy' | 'light';
+  onToggleTheme: () => void;
   onOpenSignIn: () => void;
   onOpenRegister: () => void;
   onQuickAnalyze: (ideaText: string, stage: string) => void;
 }
 
+const EncouragingPhraseCard = ({ title, quote, badge }: { title: string, quote: string, badge: string }) => {
+  return (
+    <div className="video-testimonial-card flex flex-col justify-between p-8 text-left bg-gradient-to-br from-[#06111f] to-[#081a2e] border border-[var(--line)] shadow-xl relative overflow-hidden group hover:border-[var(--cyan)]/50 transition-all duration-500">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#43e6d2]/5 rounded-full blur-2xl pointer-events-none group-hover:bg-[#43e6d2]/10 transition-all"></div>
+      <div>
+        <span className="inline-block px-3 py-1 mb-6 text-xs font-bold tracking-wider uppercase rounded-full border border-[var(--cyan)]/30 text-[var(--cyan)] bg-[var(--cyan)]/10">
+          {badge}
+        </span>
+        <h3 className="text-2xl font-bold text-white mb-4 leading-tight">{title}</h3>
+        <p className="text-base text-gray-300 leading-relaxed italic">"{quote}"</p>
+      </div>
+      <div className="pt-6 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--muted)]">
+        <span>IdeaScout Inspiration Engine</span>
+        <span className="w-2 h-2 rounded-full bg-[var(--cyan)] animate-pulse"></span>
+      </div>
+    </div>
+  );
+};
+
 const TestimonialCard = ({ videoSrc, author, role, quote }: { videoSrc: string, author: string, role: string, quote: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const playPromiseRef = useRef<Promise<void> | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const handleMouseEnter = () => {
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (videoRef.current) {
-      playPromiseRef.current = videoRef.current.play();
-      if (playPromiseRef.current !== undefined) {
-        playPromiseRef.current.catch(() => { /* ignore */ });
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => { });
       }
     }
   };
 
+  const handleMouseEnter = () => {
+    if (videoRef.current && !isPlaying) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => { });
+    }
+  };
+
   const handleMouseLeave = () => {
-    if (videoRef.current) {
-      if (playPromiseRef.current !== undefined && playPromiseRef.current !== null) {
-        playPromiseRef.current.then(() => {
-          videoRef.current?.pause();
-        }).catch(() => { /* ignore */ });
-      } else {
-        videoRef.current.pause();
-      }
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
     }
   };
 
   return (
     <div 
-      className="video-testimonial-card"
+      className="video-testimonial-card cursor-pointer group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={togglePlay}
     >
       <video 
         ref={videoRef}
@@ -50,6 +82,25 @@ const TestimonialCard = ({ videoSrc, author, role, quote }: { videoSrc: string, 
         preload="metadata"
         src={videoSrc}
       />
+      <div className="absolute top-4 right-4 z-20">
+        <button
+          type="button"
+          onClick={togglePlay}
+          aria-label={isPlaying ? 'Pause video' : 'Play video'}
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-xl transition-all duration-300 group-hover:scale-110 hover:bg-[#43e6d2] hover:text-[#031318]"
+        >
+          {isPlaying ? (
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 fill-current translate-x-0.5" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </button>
+      </div>
+
       <div className="video-testimonial-overlay">
         <h3 className="text-xl font-bold text-white mb-1">{author}</h3>
         <p className="text-sm font-medium" style={{ color: 'var(--cyan)' }}>{role}</p>
@@ -65,6 +116,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenWorkspace,
   language,
   onToggleLanguage,
+  theme,
+  onToggleTheme,
   onOpenSignIn,
   onOpenRegister,
   onQuickAnalyze,
@@ -74,6 +127,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [quickIdeaText, setQuickIdeaText] = useState('');
   const [quickStage, setQuickStage] = useState<'Concept' | 'MVP' | 'Growth'>('Concept');
 
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [isSendingFeedback, setIsSendingFeedback] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveDna((prev) => (prev + 1) % 4);
@@ -81,6 +140,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     return () => clearInterval(timer);
   }, []);
 
+  const allPhrases = [
+    {
+      titleEn: "Validated Educational Impact",
+      titleAr: "أثر تعليمي مثبت وموثوق",
+      quoteEn: "The best approach in elementary school is to use professional motivational videos. It is truly helpful and encouraging.",
+      quoteAr: "إن أفضل نهج في المدرسة الابتدائية هو استخدام مقاطع الفيديو التحفيزية المهنية. إنها مفيدة ومجشعة للغاية."
+    },
+    {
+      titleEn: "Professional Clarity",
+      titleAr: "وضوح مهني كامل",
+      quoteEn: "Clarity replaces guesswork. Trust your evidence, refine your approach, and inspire young minds with purposeful guidance.",
+      quoteAr: "الوضوح يبدد التخمين. ثق بأدلتك، وطوّر نهجك، وألهم عقول الصغار بتوجيه هادف."
+    },
+    {
+      titleEn: "Strategic Vision",
+      titleAr: "رؤية استراتيجية واعدة",
+      quoteEn: "The journey from raw spark to market certainty is guided by rigorous inquiry and professional motivation.",
+      quoteAr: "رحلة الانتقال من شرارة الفكرة إلى يقين السوق تقودها الأسئلة الدقيقة والدوافع المهنية الملهمة."
+    },
+    {
+      titleEn: "Empowering Innovators",
+      titleAr: "تمكين رواد الابتكار",
+      quoteEn: "Equipping learners with dynamic motivational media fosters deeper engagement, confidence, and lasting inspiration.",
+      quoteAr: "تجهيز المتعلمين بوسائط تحفيزية ديناميكية يعزز التفاعل العميق والثقة والإلهام المستدام."
+    }
+  ];
+
+  const [selectedPhrases] = useState(() => {
+    const shuffled = [...allPhrases].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 2);
+  });
   const dnaLabels = isArabic
     ? ['المشكلة', 'العميل', 'السوق', 'الدليل']
     : ['Problem', 'Customer', 'Market', 'Evidence'];
@@ -159,6 +249,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             onClick={onToggleLanguage}
           >
             {isArabic ? 'EN' : 'العربية'}
+          </button>
+          <button
+            type="button"
+            className="language-button inline-flex items-center gap-1.5"
+            onClick={onToggleTheme}
+            title={isArabic ? 'تبديل المظهر (داكن / فاتح)' : 'Toggle Theme (Navy / Light)'}
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? (
+              <>
+                <Moon className="w-3.5 h-3.5 text-slate-700" />
+                <span>{isArabic ? 'داكن' : 'Navy'}</span>
+              </>
+            ) : (
+              <>
+                <Sun className="w-3.5 h-3.5 text-[var(--cyan)]" />
+                <span>{isArabic ? 'فاتح' : 'Light'}</span>
+              </>
+            )}
           </button>
           <button
             type="button"
@@ -466,21 +575,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 role={isArabic ? 'مديرة مدرسة ابتدائية ومربية' : 'Elementary School Principal & Educator'}
                 quote={isArabic ? '"إن أفضل نهج في المدرسة الابتدائية هو استخدام مقاطع الفيديو التحفيزية المهنية. إنها مفيدة ومجشعة للغاية، وقد ساعدنا IdeaScout في التحقق من هذا النموذج التعليمي بوضوح تام."' : '"The best approach in elementary school is to use professional motivational videos. It is truly helpful and encouraging, and IdeaScout helped us validate this exact learning model with absolute clarity."'}
               />
-              <TestimonialCard 
-                videoSrc="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-                author="Marcus Chen"
-                role={isArabic ? 'رائد أعمال تقني ومؤسس منصة تعليمية' : 'EdTech Founder & Innovator'}
-                quote={isArabic ? '"اكتسبت الثقة لإطلاق منصتنا التعليمية بعد التحقق من كل الافتراضات المرتبطة بتفاعل الطلاب وتحفيزهم بصرياً."' : '"Gained the confidence to launch our EdTech platform after validating all core assumptions regarding student engagement and visual motivation."'}
+              <EncouragingPhraseCard 
+                badge={isArabic ? 'إلهام يومي' : 'Daily Insight'}
+                title={isArabic ? selectedPhrases[0].titleAr : selectedPhrases[0].titleEn}
+                quote={isArabic ? selectedPhrases[0].quoteAr : selectedPhrases[0].quoteEn}
               />
-              <TestimonialCard 
-                videoSrc="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
-                author="Elena Rodriguez"
-                role={isArabic ? 'مديرة الابتكار المدرسي' : 'School Innovation Director'}
-                quote={isArabic ? '"التحليل السريع وتقدير الأثر كان دقيقاً بشكل لا يصدق ووجهنا نحو تطبيق النهج التحفيزي الصحيح داخل الفصول."' : '"The rapid analysis and impact estimation was incredibly accurate and steered us toward implementing the right motivational approach in classrooms."'}
+              <EncouragingPhraseCard 
+                badge={isArabic ? 'رؤية مهنية' : 'Professional Wisdom'}
+                title={isArabic ? selectedPhrases[1].titleAr : selectedPhrases[1].titleEn}
+                quote={isArabic ? selectedPhrases[1].quoteAr : selectedPhrases[1].quoteEn}
               />
             </div>
           </div>
         </section>
+
+        {/* FAQ Section */}
+        <FAQSection isArabic={isArabic} />
 
         {/* 5-Step Methodology Strip */}
         <section className="method-strip" id="how">
@@ -573,6 +683,89 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Marketing Footer */}
       <footer className="marketing-footer">
+        <div className="max-w-lg mx-auto mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#06111f]/90 to-[#081a2e]/90 border border-[var(--cyan)]/40 backdrop-blur-xl shadow-2xl text-left relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#43e6d2]/10 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-base font-bold text-white mb-1">
+                {isArabic ? 'ساعدنا في تطوير المنصة، شاركنا برأيك' : 'Help us develop the platform, share your opinions'}
+              </h4>
+              <p className="text-xs text-[var(--muted)]">
+                {isArabic ? 'رسالتك تُرسل مباشرة إلى فريق التطوير.' : 'Your message is sent directly to the development team.'}
+              </p>
+            </div>
+            {!showFeedbackForm && !feedbackSent && (
+              <button
+                type="button"
+                onClick={() => setShowFeedbackForm(true)}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-[var(--cyan)] text-[#031318] hover:opacity-90 transition-all shrink-0"
+              >
+                {isArabic ? 'اكتب رسالتك' : 'Write Message'}
+              </button>
+            )}
+          </div>
+
+          {feedbackSent ? (
+            <div className="py-4 px-4 text-center bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 font-medium text-sm space-y-1">
+              <p>
+                {isArabic 
+                  ? '✓ شكراً جزيلاً لك على وقتك الثمين! تم إرسال رسالتك بنجاح، ونحن نتطلع إلى التواصل معك.' 
+                  : '✓ Thank you so much for your valuable time! Your message has been successfully sent, and we look forward to connecting with you.'}
+              </p>
+            </div>
+          ) : showFeedbackForm ? (
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!feedbackText.trim()) return;
+                setIsSendingFeedback(true);
+                setTimeout(() => {
+                  setIsSendingFeedback(false);
+                  setFeedbackSent(true);
+                  // Optionally save to localStorage
+                  const existing = JSON.parse(localStorage.getItem('ideascout_owner_messages') || '[]');
+                  localStorage.setItem('ideascout_owner_messages', JSON.stringify([...existing, { text: feedbackText, email: feedbackEmail, date: new Date().toISOString() }]));
+                }, 800);
+              }}
+              className="space-y-3 mt-4 pt-3 border-t border-[var(--line)]"
+            >
+              <div>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder={isArabic ? 'اكتب رأيك، مقترحك، أو ملاحظاتك هنا...' : 'Write your opinion, suggestion, or feedback here...'}
+                  rows={3}
+                  required
+                  className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[var(--cyan)] resize-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={feedbackEmail}
+                  onChange={(e) => setFeedbackEmail(e.target.value)}
+                  placeholder={isArabic ? 'بريدك الإلكتروني (اختياري)' : 'Your email (optional)'}
+                  className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-[var(--cyan)]"
+                />
+                <button
+                  type="submit"
+                  disabled={isSendingFeedback}
+                  className="px-5 py-2 text-xs font-bold rounded-xl bg-[var(--cyan)] text-[#031318] hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0"
+                >
+                  {isSendingFeedback ? (isArabic ? 'جاري الإرسال...' : 'Sending...') : (isArabic ? 'إرسال' : 'Send')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFeedbackForm(false)}
+                  className="px-3 py-2 text-xs font-medium rounded-xl bg-white/5 border border-white/15 text-gray-300 hover:bg-white/10"
+                >
+                  {isArabic ? 'إلغاء' : 'Cancel'}
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </div>
         <Brand />
         <p>
           {isArabic
