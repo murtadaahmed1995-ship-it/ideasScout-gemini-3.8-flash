@@ -172,13 +172,13 @@ export const initialIdeas: Idea[] = [
 ];
 
 export const defaultProfile: Profile = {
-  userId: 'user-default-founder',
-  name: 'Murtada Ahmed',
-  email: 'Murtadaahmed1995@gmail.com',
-  role: 'Founder & Product Lead',
-  timezone: 'Asia/Dubai',
+  userId: '',
+  name: '',
+  email: '',
+  role: '',
+  timezone: 'UTC',
   language: 'en' as const,
-  weeklyDigest: true,
-  signalAlerts: true,
-  emailVerified: true
+  weeklyDigest: false,
+  signalAlerts: false,
+  emailVerified: false
 };

@@ -15,103 +15,6 @@ interface LandingPageProps {
   onQuickAnalyze: (ideaText: string, stage: string) => void;
 }
 
-const EncouragingPhraseCard = ({ title, quote, badge }: { title: string, quote: string, badge: string }) => {
-  return (
-    <div className="video-testimonial-card flex flex-col justify-between p-8 text-left bg-gradient-to-br from-[#06111f] to-[#081a2e] border border-[var(--line)] shadow-xl relative overflow-hidden group hover:border-[var(--cyan)]/50 transition-all duration-500">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#43e6d2]/5 rounded-full blur-2xl pointer-events-none group-hover:bg-[#43e6d2]/10 transition-all"></div>
-      <div>
-        <span className="inline-block px-3 py-1 mb-6 text-xs font-bold tracking-wider uppercase rounded-full border border-[var(--cyan)]/30 text-[var(--cyan)] bg-[var(--cyan)]/10">
-          {badge}
-        </span>
-        <h3 className="text-2xl font-bold text-white mb-4 leading-tight">{title}</h3>
-        <p className="text-base text-gray-300 leading-relaxed italic">"{quote}"</p>
-      </div>
-      <div className="pt-6 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--muted)]">
-        <span>IdeaScout Inspiration Engine</span>
-        <span className="w-2 h-2 rounded-full bg-[var(--cyan)] animate-pulse"></span>
-      </div>
-    </div>
-  );
-};
-
-const TestimonialCard = ({ videoSrc, author, role, quote }: { videoSrc: string, author: string, role: string, quote: string }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const togglePlay = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch(() => { });
-      }
-    }
-  };
-
-  const handleMouseEnter = () => {
-    if (videoRef.current && !isPlaying) {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(() => { });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (videoRef.current && isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  return (
-    <div 
-      className="video-testimonial-card cursor-pointer group"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={togglePlay}
-    >
-      <video 
-        ref={videoRef}
-        loop 
-        muted 
-        playsInline
-        preload="metadata"
-        src={videoSrc}
-      />
-      <div className="absolute top-4 right-4 z-20">
-        <button
-          type="button"
-          onClick={togglePlay}
-          aria-label={isPlaying ? 'Pause video' : 'Play video'}
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-xl transition-all duration-300 group-hover:scale-110 hover:bg-[#43e6d2] hover:text-[#031318]"
-        >
-          {isPlaying ? (
-            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5 fill-current translate-x-0.5" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </button>
-      </div>
-
-      <div className="video-testimonial-overlay">
-        <h3 className="text-xl font-bold text-white mb-1">{author}</h3>
-        <p className="text-sm font-medium" style={{ color: 'var(--cyan)' }}>{role}</p>
-        <p className="text-sm mt-3 line-clamp-3 leading-relaxed" style={{ color: 'var(--muted)' }}>
-          {quote}
-        </p>
-      </div>
-    </div>
-  );
-};
-
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenWorkspace,
   language,
@@ -142,28 +45,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const allPhrases = [
     {
-      titleEn: "Validated Educational Impact",
-      titleAr: "أثر تعليمي مثبت وموثوق",
-      quoteEn: "The best approach in elementary school is to use professional motivational videos. It is truly helpful and encouraging.",
-      quoteAr: "إن أفضل نهج في المدرسة الابتدائية هو استخدام مقاطع الفيديو التحفيزية المهنية. إنها مفيدة ومجشعة للغاية."
+      titleEn: "Validated Market Clarity",
+      titleAr: "وضوح السوق المثبت",
+      quoteEn: "Clarity replaces guesswork. Trust your evidence, refine your approach, and evaluate opportunities with absolute confidence.",
+      quoteAr: "الوضوح يبدد التخمين. ثق بأدلتك، وطوّر نهجك، وقيم الفرص بثقة مطلقة."
     },
     {
-      titleEn: "Professional Clarity",
-      titleAr: "وضوح مهني كامل",
-      quoteEn: "Clarity replaces guesswork. Trust your evidence, refine your approach, and inspire young minds with purposeful guidance.",
-      quoteAr: "الوضوح يبدد التخمين. ثق بأدلتك، وطوّر نهجك، وألهم عقول الصغار بتوجيه هادف."
+      titleEn: "Professional Rigor",
+      titleAr: "منهجية مهنية دقيقة",
+      quoteEn: "Separate unverified assumptions from real market proof before investing your capital and operational time.",
+      quoteAr: "افصل الافتراضات غير الموثقة عن أدلة السوق الحقيقية قبل استثمار رأس المال ووقت التشغيل."
     },
     {
       titleEn: "Strategic Vision",
       titleAr: "رؤية استراتيجية واعدة",
-      quoteEn: "The journey from raw spark to market certainty is guided by rigorous inquiry and professional motivation.",
-      quoteAr: "رحلة الانتقال من شرارة الفكرة إلى يقين السوق تقودها الأسئلة الدقيقة والدوافع المهنية الملهمة."
+      quoteEn: "The journey from raw spark to market certainty is guided by rigorous inquiry and empirical signals.",
+      quoteAr: "رحلة الانتقال من شرارة الفكرة إلى يقين السوق تقودها الأسئلة الدقيقة والإشارات التجريبية."
     },
     {
       titleEn: "Empowering Innovators",
       titleAr: "تمكين رواد الابتكار",
-      quoteEn: "Equipping learners with dynamic motivational media fosters deeper engagement, confidence, and lasting inspiration.",
-      quoteAr: "تجهيز المتعلمين بوسائط تحفيزية ديناميكية يعزز التفاعل العميق والثقة والإلهام المستدام."
+      quoteEn: "Equipping founders with structured intelligence fosters deeper strategic alignment and lasting venture momentum.",
+      quoteAr: "تجهيز المؤسسين بالذكاء المنظم يعزز التوافق الاستراتيجي العميق ودفع زخم المشروع المستدام."
     }
   ];
 
@@ -547,44 +450,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Veo Video Testimonials Section */}
-        <section className="py-24 px-6 relative z-10" style={{ background: 'var(--bg-color)', borderBottom: '1px solid var(--line)' }}>
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <span className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider uppercase rounded-full border" style={{ color: 'var(--cyan)', borderColor: 'var(--cyan)', backgroundColor: 'rgba(67, 230, 210, 0.1)' }}>
-                {isArabic ? 'مدعوم من Veo' : 'Powered by Veo'}
-              </span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4" style={{ color: 'var(--ink)' }}>
-                {isArabic ? 'قصص الأثر المثبت والنجاح التعليمي المُلهم' : 'Validated Impact & Educational Success Stories'}
-              </h2>
-              <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted)' }}>
-                {isArabic 
-                  ? 'اكتشف كيف ساعدت منصتنا المؤسسين وقادة التعليم في التحقق من أفكارهم وتحقيق تأثير إيجابي حقيقي.' 
-                  : 'Discover how our platform helped founders and education leaders validate their ideas and drive meaningful impact.'}
-              </p>
-            </div>
-
-            <div className="video-testimonials-grid">
-              <TestimonialCard 
-                videoSrc="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-                author="Sarah Jenkins"
-                role={isArabic ? 'مديرة مدرسة ابتدائية ومربية' : 'Elementary School Principal & Educator'}
-                quote={isArabic ? '"إن أفضل نهج في المدرسة الابتدائية هو استخدام مقاطع الفيديو التحفيزية المهنية. إنها مفيدة ومجشعة للغاية، وقد ساعدنا IdeaScout في التحقق من هذا النموذج التعليمي بوضوح تام."' : '"The best approach in elementary school is to use professional motivational videos. It is truly helpful and encouraging, and IdeaScout helped us validate this exact learning model with absolute clarity."'}
-              />
-              <EncouragingPhraseCard 
-                badge={isArabic ? 'إلهام يومي' : 'Daily Insight'}
-                title={isArabic ? selectedPhrases[0].titleAr : selectedPhrases[0].titleEn}
-                quote={isArabic ? selectedPhrases[0].quoteAr : selectedPhrases[0].quoteEn}
-              />
-              <EncouragingPhraseCard 
-                badge={isArabic ? 'رؤية مهنية' : 'Professional Wisdom'}
-                title={isArabic ? selectedPhrases[1].titleAr : selectedPhrases[1].titleEn}
-                quote={isArabic ? selectedPhrases[1].quoteAr : selectedPhrases[1].quoteEn}
-              />
             </div>
           </div>
         </section>

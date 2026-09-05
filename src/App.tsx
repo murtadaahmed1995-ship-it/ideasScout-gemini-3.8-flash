@@ -5,6 +5,8 @@ import { AuthView } from './components/AuthView';
 import { defaultProfile, initialIdeas } from './data/sampleIdeas';
 import { Idea, Profile, WorkspaceView } from './types';
 import { evaluateIdea } from './utils/engine';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './lib/firebase';
 
 export default function App() {
   const [mode, setMode] = useState<'landing' | 'workspace'>('landing');
@@ -84,6 +86,39 @@ export default function App() {
       // ignore
     }
   }, [profile]);
+
+  // Firebase Auth state listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          await firebaseUser.reload();
+        } catch {}
+        
+        if (firebaseUser.emailVerified) {
+          setProfile((prev) => ({
+            ...prev,
+            userId: firebaseUser.uid,
+            name: firebaseUser.displayName || prev.name || (language === 'ar' ? 'مؤسس' : 'Founder'),
+            email: firebaseUser.email || '',
+            emailVerified: true
+          }));
+        } else {
+          setProfile((prev) => ({
+            ...prev,
+            userId: firebaseUser.uid,
+            name: firebaseUser.displayName || prev.name || '',
+            email: firebaseUser.email || '',
+            emailVerified: false
+          }));
+          setMode('landing');
+        }
+      } else {
+        setProfile(defaultProfile);
+      }
+    });
+    return () => unsubscribe();
+  }, [language]);
 
   const handleToggleLanguage = () => {
     setLanguage((prev) => (prev === 'en' ? 'ar' : 'en'));
@@ -196,7 +231,12 @@ export default function App() {
           onToggleLanguage={handleToggleLanguage}
           theme={theme}
           onToggleTheme={handleToggleTheme}
-          onReturnToLanding={() => {
+          onReturnToLanding={async () => {
+            try {
+              await signOut(auth);
+            } catch {
+              // ignore
+            }
             setMode('landing');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}

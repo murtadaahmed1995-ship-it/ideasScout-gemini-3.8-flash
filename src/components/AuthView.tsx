@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Profile } from '../types';
-import { LogIn, UserPlus, Mail, Lock, User, Briefcase, AlertCircle, X, ShieldCheck, CheckCircle2, Send, FileText } from 'lucide-react';
+import { auth } from '../lib/firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendEmailVerification, 
+  updateProfile,
+  signOut 
+} from 'firebase/auth';
+import { LogIn, UserPlus, Mail, Lock, User, Briefcase, AlertCircle, X, ShieldCheck, Send, FileText, Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 interface AuthViewProps {
   isOpen: boolean;
@@ -38,26 +46,39 @@ export const AuthView: React.FC<AuthViewProps> = ({
 }) => {
   const [mode, setMode] = useState<'signin' | 'register'>(initialMode);
   const [step, setStep] = useState<'form' | 'verify'>('form');
-  const [email, setEmail] = useState(currentProfile.email || '');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState(currentProfile.name || '');
-  const [role, setRole] = useState(currentProfile.role || (isArabic ? 'صاحب فكرة' : 'Idea Owner'));
+  const [name, setName] = useState('');
+  const [role, setRole] = useState(isArabic ? 'صاحب فكرة' : 'Idea Owner');
   const [roleDescription, setRoleDescription] = useState('');
   
   const [errorMessage, setErrorMessage] = useState('');
-  const [pendingProfile, setPendingProfile] = useState<Profile | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const { isMatch, matchError } = usePasswordMatch(password, confirmPassword, isArabic);
+
+  useEffect(() => {
+    let timer: any;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   if (!isOpen) return null;
 
   const validateEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
   const validatePassword = (val: string) => val.length >= 6;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setSuccessMessage('');
 
     if (!validateEmail(email)) {
       setErrorMessage(isArabic ? 'يرجى إدخال بريد إلكتروني فعال وصحيح.' : 'Please enter a valid active email address.');
@@ -75,39 +96,126 @@ export const AuthView: React.FC<AuthViewProps> = ({
       }
     }
 
-    if (mode === 'signin' && password.length < 4) {
-      setErrorMessage(isArabic ? 'كلمة المرور غير صحيحة.' : 'Incorrect password.');
-      return;
-    }
+    setLoading(true);
 
-    const finalRoleString = roleDescription.trim() 
-      ? `${role} — ${roleDescription.trim()}` 
-      : role;
+    try {
+      if (mode === 'register') {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        if (name.trim()) {
+          await updateProfile(user, { displayName: name.trim() });
+        }
+        // Send verification email with correct return origin URL
+        await sendEmailVerification(user, { url: window.location.origin });
+        setStep('verify');
+        setResendCooldown(60);
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Reload user to get latest emailVerified status
+        await user.reload();
+        
+        if (!user.emailVerified) {
+          setStep('verify');
+          setErrorMessage(isArabic ? 'بريدك الإلكتروني غير مؤكد بعد. يرجى تأكيد بريدك من رابط التحقق المرسل.' : 'Your email is not verified yet. Please confirm your email via the verification link sent.');
+          setLoading(false);
+          return;
+        }
 
-    const updatedProfile: Profile = {
-      ...currentProfile,
-      name: name.trim() || (isArabic ? 'مؤسس جديد' : 'New Founder'),
-      email: email.trim(),
-      role: finalRoleString,
-      emailVerified: mode === 'signin' ? true : false
-    };
+        const finalRoleString = roleDescription.trim() 
+          ? `${role} — ${roleDescription.trim()}` 
+          : role;
 
-    if (mode === 'register') {
-      setPendingProfile(updatedProfile);
-      setStep('verify');
-    } else {
-      onSuccess(updatedProfile);
-      onClose();
+        const updatedProfile: Profile = {
+          ...currentProfile,
+          userId: user.uid,
+          name: user.displayName || name.trim() || (isArabic ? 'مؤسس' : 'Founder'),
+          email: user.email || email.trim(),
+          role: finalRoleString,
+          emailVerified: true
+        };
+        onSuccess(updatedProfile);
+        onClose();
+      }
+    } catch (err: any) {
+      console.error('Firebase Auth error:', err);
+      let msg = err.message || (isArabic ? 'فشلت عملية المصادقة عبر فايربيس.' : 'Authentication failed.');
+      if (err.code === 'auth/email-already-in-use') {
+        msg = isArabic ? 'البريد الإلكتروني مستخدم بالفعل. يرجى تسجيل الدخول.' : 'Email is already in use. Please sign in.';
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-email') {
+        msg = isArabic ? 'بيانات الاعتماد غير صحيحة أو البريد غير مسجل.' : 'Invalid credentials or user not found.';
+      } else if (err.code === 'auth/weak-password') {
+        msg = isArabic ? 'كلمة المرور ضعيفة جداً.' : 'Password should be at least 6 characters.';
+      }
+      setErrorMessage(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSimulateVerification = () => {
-    if (pendingProfile) {
-      const verifiedProfile = { ...pendingProfile, emailVerified: true };
-      onSuccess(verifiedProfile);
-      setStep('form');
-      setPendingProfile(null);
-      onClose();
+  const handleCheckVerification = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setLoading(true);
+
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setErrorMessage(isArabic ? 'لا يوجد مستخدم مسجل حالياً. يرجى تسجيل الدخول.' : 'No signed-in user found. Please sign in.');
+        setStep('form');
+        setLoading(false);
+        return;
+      }
+
+      // Call user.reload() to fetch the latest server verification state
+      await user.reload();
+
+      if (user.emailVerified) {
+        const updatedProfile: Profile = {
+          ...currentProfile,
+          userId: user.uid,
+          name: user.displayName || name.trim() || (isArabic ? 'مؤسس' : 'Founder'),
+          email: user.email || email,
+          emailVerified: true
+        };
+        setSuccessMessage(isArabic ? 'تم التحقق بنجاح! جاري الدخول...' : 'Email verified successfully! Entering workspace...');
+        setTimeout(() => {
+          onSuccess(updatedProfile);
+          onClose();
+        }, 1000);
+      } else {
+        setErrorMessage(isArabic ? 'لم يتم تأكيد البريد الإلكتروني بعد. يرجى الضغط على الرابط في رسالة البريد الوارد ثم إعادة المحاولة.' : 'Email is not verified yet. Please click the link in your inbox email and try again.');
+      }
+    } catch (err: any) {
+      console.error('Verification check error:', err);
+      setErrorMessage(isArabic ? 'تعذر التحقق من الحالة حالياً. يرجى المحاولة لاحقاً.' : 'Could not check verification status. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (resendCooldown > 0) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    setLoading(true);
+
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setErrorMessage(isArabic ? 'يرجى تسجيل الدخول أولاً.' : 'Please sign in first.');
+        setLoading(false);
+        return;
+      }
+      await sendEmailVerification(user, { url: window.location.origin });
+      setSuccessMessage(isArabic ? 'تم إعادة إرسال بريد التحقق بنجاح!' : 'Verification email resent successfully!');
+      setResendCooldown(60);
+    } catch (err: any) {
+      console.error('Resend verification error:', err);
+      setErrorMessage(isArabic ? 'فشل إرسال بريد التحقق. يرجى المحاولة لاحقاً.' : 'Failed to resend verification email. Please try later.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,13 +285,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <span className="panel-kicker" style={{ color: mode === 'register' ? '#52e8ac' : 'var(--cyan)' }}>
-              {mode === 'register'
-                ? (isArabic ? 'بوابة تسجيل الحساب الجديد' : 'FOUNDER REGISTRATION PORTAL')
-                : (isArabic ? 'بوابة تسجيل الدخول' : 'SECURE SIGN IN PORTAL')}
+              {step === 'verify'
+                ? (isArabic ? 'التحقق الإلزامي للبريد' : 'MANDATORY EMAIL VERIFICATION')
+                : mode === 'register'
+                  ? (isArabic ? 'بوابة تسجيل الحساب الجديد' : 'FOUNDER REGISTRATION PORTAL')
+                  : (isArabic ? 'بوابة تسجيل الدخول' : 'SECURE SIGN IN PORTAL')}
             </span>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', marginTop: '4px' }}>
               {step === 'verify'
-                ? (isArabic ? 'التحقق الإلزامي من البريد الإلكتروني' : 'Mandatory Email Verification')
+                ? (isArabic ? 'تأكيد بريدك الإلكتروني' : 'Verify Your Email Address')
                 : (mode === 'register' ? (isArabic ? 'إنشاء حساب جديد للمنصة' : 'Create Platform Account') : (isArabic ? 'تسجيل الدخول لمساحة العمل' : 'Sign In to Workspace'))}
             </h2>
           </div>
@@ -201,7 +311,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'rgba(11, 19, 41, 0.8)', padding: '5px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <button
               type="button"
-              onClick={() => { setMode('signin'); setErrorMessage(''); }}
+              onClick={() => { setMode('signin'); setErrorMessage(''); setSuccessMessage(''); }}
               style={{
                 background: mode === 'signin' ? 'var(--cyan)' : 'transparent',
                 color: mode === 'signin' ? '#0b1329' : 'var(--muted)',
@@ -223,7 +333,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => { setMode('register'); setErrorMessage(''); }}
+              onClick={() => { setMode('register'); setErrorMessage(''); setSuccessMessage(''); }}
               style={{
                 background: mode === 'register' ? '#52e8ac' : 'transparent',
                 color: mode === 'register' ? '#0b1329' : 'var(--muted)',
@@ -253,6 +363,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
+        {successMessage && (
+          <div style={{ background: 'rgba(82, 232, 172, 0.12)', border: '1px solid rgba(82, 232, 172, 0.3)', padding: '12px 16px', borderRadius: '12px', color: '#52e8ac', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
         {step === 'verify' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'center', padding: '10px 0' }}>
             <div style={{
@@ -272,39 +389,74 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
             <div>
               <h3 style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '8px', fontWeight: 700 }}>
-                {isArabic ? 'تحقق من بريدك الإلكتروني' : 'Verify Your Email Address'}
+                {isArabic ? 'مطلوب تأكيد البريد الإلكتروني' : 'Email Verification Required'}
               </h3>
               <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>
                 {isArabic
-                  ? `أرسلنا رابط تفعيل إلى البريد (${email}). يرجى تأكيد البريد لفتح صلاحية الدخول لمساحة العمل.`
-                  : `We sent an activation link to (${email}). Please confirm your email to unlock workspace access.`}
+                  ? `أرسلنا رسالة تحقق رسمية إلى بريدك (${email}). لا يمكن الوصول إلى مساحة العمل قبل إتمام النقر على رابط التحقق.`
+                  : `We have sent an official verification link to (${email}). Workspace access is strictly restricted until verification is complete.`}
               </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                type="button"
+                disabled={loading}
+                className="btn btn-primary"
+                onClick={handleCheckVerification}
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  padding: '12px',
+                  fontSize: '14px',
+                  background: 'var(--cyan)',
+                  color: '#0b1329',
+                  opacity: loading ? 0.7 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span>{isArabic ? 'تحقق من حالة التفعيل (لقد قمت بالضغط على الرابط)' : 'I Have Verified My Email (Check Status)'}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={loading || resendCooldown > 0}
+                className="btn"
+                onClick={handleResendVerification}
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  padding: '11px',
+                  fontSize: '13px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: '#fff',
+                  opacity: (loading || resendCooldown > 0) ? 0.6 : 1,
+                  cursor: (loading || resendCooldown > 0) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <span>
+                  {resendCooldown > 0
+                    ? (isArabic ? `إعادة الإرسال خلال (${resendCooldown} ثانية)` : `Resend Verification Email (${resendCooldown}s)`)
+                    : (isArabic ? 'إعادة إرسال بريد التحقق' : 'Resend Verification Email')}
+                </span>
+              </button>
             </div>
 
             <button
               type="button"
-              className="btn btn-primary"
-              onClick={handleSimulateVerification}
-              style={{
-                width: '100%',
-                justifyContent: 'center',
-                padding: '12px',
-                fontSize: '14px',
-                background: '#52e8ac',
-                color: '#0b1329'
+              onClick={async () => {
+                try {
+                  await signOut(auth);
+                } catch {}
+                setStep('form');
+                setMode('signin');
               }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--muted)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isArabic ? 'تأكيد البريد (محاكاة رابط المصادقة)' : 'Verify Email (Simulate Auth Link)'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setStep('form')}
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              {isArabic ? 'العودة لتعديل البيانات' : 'Back to Form'}
+              {isArabic ? 'العودة لتسجيل الدخول بحساب آخر' : 'Sign in with a different account'}
             </button>
           </div>
         ) : (
@@ -354,7 +506,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder={isArabic ? 'أدخل كلمة المرور' : 'Enter your password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'rgba(11, 19, 41, 0.7)', border: '1px solid var(--line)', borderRadius: '12px', color: '#fff', fontSize: '14px', backdropFilter: 'blur(4px)' }}
@@ -372,7 +524,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   <input
                     type="password"
                     required
-                    placeholder="••••••••"
+                    placeholder={isArabic ? 'أعد إدخال كلمة المرور' : 'Confirm your password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     style={{
@@ -436,6 +588,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
             <button
               type="submit"
+              disabled={loading}
               className="btn btn-primary"
               style={{
                 width: '100%',
@@ -444,14 +597,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 padding: '12px',
                 fontSize: '14px',
                 background: mode === 'register' ? '#52e8ac' : 'var(--cyan)',
-                color: '#0b1329'
+                color: '#0b1329',
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {mode === 'register' ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : mode === 'register' ? (
+                <UserPlus className="w-4 h-4" />
+              ) : (
+                <LogIn className="w-4 h-4" />
+              )}
               <span>
-                {mode === 'register'
-                  ? (isArabic ? 'إنشاء الحساب والتحقق من البريد' : 'Create Account & Verify Email')
-                  : (isArabic ? 'دخول فوري لمساحة العمل' : 'Sign In to Workspace')}
+                {loading
+                  ? (isArabic ? 'جاري المعالجة عبر فايربيس...' : 'Processing via Firebase...')
+                  : mode === 'register'
+                    ? (isArabic ? 'إنشاء الحساب وإرسال التحقق' : 'Create Account & Send Verification')
+                    : (isArabic ? 'تسجيل الدخول الآمن' : 'Secure Sign In')}
               </span>
             </button>
           </form>
@@ -459,7 +622,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <div style={{ fontSize: '11px', color: 'var(--muted-2)', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
           <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{isArabic ? 'خلفية زجاجية فاخرة مشفرة ومحمية عبر محرك المنصة' : 'Glassmorphic secure platform engine persistence'}</span>
+          <span>{isArabic ? 'محمي بواسطة مصادقة فايربيس الآمنة' : 'Protected by Firebase Authentication'}</span>
         </div>
       </div>
     </div>

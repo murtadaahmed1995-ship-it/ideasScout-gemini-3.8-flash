@@ -13,16 +13,10 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
   {
-    qEn: "How does IdeaScout help validate my educational or business idea?",
-    qAr: "كيف تساعد منصة IdeaScout في التحقق من فكرتي التعليمية أو التجارية؟",
+    qEn: "How does IdeaScout help validate my business or innovation idea?",
+    qAr: "كيف تساعد منصة IdeaScout في التحقق من فكرتك التجارية أو الابتكار؟",
     aEn: "IdeaScout evaluates your idea across multiple dimensions such as target audience, market need, and evidence confidence, providing a structured report before you invest time or resources.",
     aAr: "تقيم IdeaScout فكرتك عبر أبعاد متعددة مثل الجمهور المستهدف، الحاجة في السوق، وثقة الأدلة، مما يوفر تقريراً منظماً قبل استثمار الوقت أو الموارد."
-  },
-  {
-    qEn: "Why are professional motivational videos effective in elementary schools?",
-    qAr: "لماذا تُعتبر مقاطع الفيديو التحفيزية المهنية فعالة في المدارس الابتدائية؟",
-    aEn: "They foster deep engagement, emotional encouragement, and positive reinforcement, helping young learners connect with foundational concepts in an inspiring way.",
-    aAr: "فهي تعزز التفاعل العميق، والتشجيع العاطفي، والتعزيز الإيجابي، مما يساعد المتعلمين الصغار على الارتباط بالمفاهيم الأساسية بطريقة ملهمة."
   },
   {
     qEn: "Can I save and manage multiple ideas in my vault?",
@@ -63,8 +57,8 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ isArabic }) => {
           </h2>
           <p className="text-lg max-w-xl mx-auto" style={{ color: 'var(--muted)' }}>
             {isArabic 
-              ? 'إجابات واضحة حول منهجية التحليل، مقاطع الفيديو التحفيزية، وإدارة الأفكار.' 
-              : 'Clear answers on our analysis methodology, motivational media, and idea vault management.'}
+              ? 'إجابات واضحة حول منهجية التحليل وإدارة الأفكار.' 
+              : 'Clear answers on our analysis methodology and idea vault management.'}
           </p>
         </div>
 
