@@ -23,8 +23,8 @@ html.light-theme {
   --line: #cbd5e1;
   --line-strong: #94a3b8;
   --ink: #0f172a;
-  --muted: #475569;
-  --muted-2: #64748b;
+  --muted: #334155;
+  --muted-2: #475569;
   --cyan: #0d9488;
   --blue: #0284c7;
   --card-bg: #ffffff;
@@ -1909,8 +1909,8 @@ html.light-theme {
   --card-bg: #ffffff;
   --ink: #0f172a;
   --text-color: #0f172a;
-  --muted: #475569;
-  --muted-2: #64748b;
+  --muted: #334155;
+  --muted-2: #475569;
   --cyan: #0d9488;
   --blue: #0284c7;
   --violet: #6366f1;
@@ -1935,7 +1935,7 @@ html.light-theme h4 {
 }
 
 html.light-theme p {
-  color: #475569;
+  color: var(--muted);
 }
 
 /* Brand styling */
@@ -1981,11 +1981,11 @@ html.light-theme .sidebar-header {
 html.light-theme .collapse-button {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .sidebar-nav button {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .sidebar-nav button:hover {
@@ -2000,7 +2000,7 @@ html.light-theme .sidebar-nav button.active {
 }
 
 html.light-theme .sidebar-nav button .glyph {
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .sidebar-nav button.active .glyph {
@@ -2052,7 +2052,7 @@ html.light-theme .topbar-title h1 {
 }
 
 html.light-theme .topbar-path {
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .language-button,
@@ -2060,7 +2060,7 @@ html.light-theme .top-icon-button,
 html.light-theme .top-profile-button {
   background: #ffffff !important;
   border-color: #cbd5e1 !important;
-  color: #334155 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .language-button:hover,
@@ -2096,7 +2096,7 @@ html.light-theme .notifications-dropdown strong {
 
 html.light-theme .notifications-dropdown>button:not(.dropdown-footer) {
   border-bottom-color: #f1f5f9 !important;
-  color: #334155 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .notifications-dropdown>button:hover {
@@ -2104,7 +2104,7 @@ html.light-theme .notifications-dropdown>button:hover {
 }
 
 html.light-theme .profile-dropdown button {
-  color: #334155 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .profile-dropdown button:hover {
@@ -2130,7 +2130,7 @@ html.light-theme .metric-card strong {
 }
 
 html.light-theme .metric-card span {
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .metric-icon {
@@ -2147,7 +2147,7 @@ html.light-theme .panel-topline h2 {
 
 html.light-theme .section-heading p,
 html.light-theme .welcome-panel p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .next-action-bar {
@@ -2173,15 +2173,15 @@ html.light-theme .score-ring {
 }
 
 html.light-theme .score-ring-inner span {
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .score-context p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .signal-chips span {
-  color: #475569 !important;
+  color: var(--muted) !important;
   border-color: #cbd5e1 !important;
   background: #f8fafc !important;
 }
@@ -2192,7 +2192,7 @@ html.light-theme .bar-area {
 }
 
 html.light-theme .bar-column span {
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .bar-column i {
@@ -2221,7 +2221,7 @@ html.light-theme .recommendation-panel h2 {
 }
 
 html.light-theme .recommendation-panel p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .launch-offer {
@@ -2234,7 +2234,7 @@ html.light-theme .launch-offer h2 {
 }
 
 html.light-theme .launch-offer p {
-  color: #334155 !important;
+  color: var(--muted) !important;
 }
 
 /* Forms & Inputs */
@@ -2254,7 +2254,7 @@ html.light-theme input::placeholder {
 html.light-theme .stage-options button {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .stage-options button.active {
@@ -2289,7 +2289,7 @@ html.light-theme .idea-card h2 {
 }
 
 html.light-theme .idea-card>p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .search-field {
@@ -2303,7 +2303,7 @@ html.light-theme .search-field input {
 
 html.light-theme .filter-row button,
 html.light-theme .layout-switch button {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .filter-row button.active,
@@ -2355,11 +2355,11 @@ html.light-theme .confidence-card p,
 html.light-theme .next-best-card p,
 html.light-theme .recommendation-card p,
 html.light-theme .risk-card p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .report-tabs button {
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .report-tabs button.active {
@@ -2379,7 +2379,7 @@ html.light-theme .next-best-card {
 html.light-theme .timeline-node>span {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .timeline-node>span.active {
@@ -2447,7 +2447,7 @@ html.light-theme .marketing-nav {
 
 html.light-theme .marketing-links>a,
 html.light-theme .text-button {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .marketing-links>a:hover,
@@ -2460,7 +2460,7 @@ html.light-theme .hero-copy h1 {
 }
 
 html.light-theme .hero-copy>p {
-  color: #334155 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .launch-chip {
@@ -2477,7 +2477,7 @@ html.light-theme .product-window {
 
 html.light-theme .window-top {
   border-bottom: 1px solid #e2e8f0 !important;
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 html.light-theme .preview-rail {
@@ -2524,7 +2524,7 @@ html.light-theme .quick-analyzer-textarea {
 html.light-theme .quick-stage-btn {
   background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .quick-stage-btn.active {
@@ -2542,7 +2542,7 @@ html.light-theme .method-steps h3 {
 }
 
 html.light-theme .method-steps p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .signal-visual {
@@ -2559,7 +2559,7 @@ html.light-theme .signal-copy-grid h3 {
 }
 
 html.light-theme .signal-copy-grid p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .cta-section {
@@ -2572,7 +2572,7 @@ html.light-theme .cta-section h2 {
 }
 
 html.light-theme .cta-section p {
-  color: #334155 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .landing-feedback-card {
@@ -2587,7 +2587,7 @@ html.light-theme .landing-feedback-card h4 {
 
 html.light-theme .marketing-footer {
   border-top-color: #e2e8f0 !important;
-  color: #64748b !important;
+  color: var(--muted-2) !important;
 }
 
 /* Auth Modal & Views */
@@ -2620,7 +2620,7 @@ html.light-theme .auth-brand-panel h1 {
 }
 
 html.light-theme .auth-brand-panel p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .auth-card h2 {
@@ -2628,7 +2628,7 @@ html.light-theme .auth-card h2 {
 }
 
 html.light-theme .auth-card>p {
-  color: #475569 !important;
+  color: var(--muted) !important;
 }
 
 html.light-theme .auth-mini-proof {
