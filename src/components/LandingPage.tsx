@@ -238,13 +238,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Quick Idea Analyzer Glassmorphic Widget */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(16, 26, 52, 0.85), rgba(9, 15, 32, 0.95))',
-              border: '1px solid rgba(67, 230, 210, 0.35)',
+            <div className="quick-analyzer-card" style={{
               borderRadius: '20px',
               padding: '22px',
               marginTop: '24px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)',
               backdropFilter: 'blur(12px)',
               display: 'flex',
               flexDirection: 'column',
@@ -265,18 +262,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 value={quickIdeaText}
                 onChange={(e) => setQuickIdeaText(e.target.value)}
                 placeholder={isArabic ? 'اكتب فكرتك أو فرضيتك هنا باختصار (مثلاً: منصة توظيف ذكية للمستقلين في الشرق الأوسط...)' : 'Type your startup or product idea here (e.g. AI-powered recruitment platform for MENA freelancers...)'}
-                style={{
-                  width: '100%',
-                  background: 'rgba(11, 19, 41, 0.8)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '12px',
-                  padding: '12px 14px',
-                  color: '#fff',
-                  fontSize: '13px',
-                  resize: 'none',
-                  outline: 'none',
-                  fontFamily: 'inherit'
-                }}
+                className="quick-analyzer-textarea"
               />
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
@@ -286,17 +272,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       key={s}
                       type="button"
                       onClick={() => setQuickStage(s)}
-                      style={{
-                        background: quickStage === s ? 'var(--cyan)' : 'rgba(255,255,255,0.05)',
-                        color: quickStage === s ? '#0b1329' : 'var(--muted)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        padding: '4px 10px',
-                        borderRadius: '8px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
+                      className={`quick-stage-btn ${quickStage === s ? 'active' : ''}`}
                     >
                       {s === 'Concept' ? (isArabic ? 'فكرة / مفهوم' : 'Concept') : s === 'MVP' ? (isArabic ? 'نموذج أولي' : 'MVP') : (isArabic ? 'نمو وتوسع' : 'Growth')}
                     </button>
@@ -548,7 +524,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Marketing Footer */}
       <footer className="marketing-footer">
-        <div className="max-w-lg mx-auto mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#06111f]/90 to-[#081a2e]/90 border border-[var(--cyan)]/40 backdrop-blur-xl shadow-2xl text-left relative overflow-hidden">
+        <div className="landing-feedback-card max-w-lg mx-auto mb-8 p-6 rounded-2xl border border-[var(--cyan)]/40 backdrop-blur-xl shadow-2xl text-left relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#43e6d2]/10 rounded-full blur-2xl pointer-events-none"></div>
           
           <div className="flex items-center justify-between mb-4">

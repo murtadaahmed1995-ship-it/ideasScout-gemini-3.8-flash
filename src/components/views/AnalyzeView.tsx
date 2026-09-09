@@ -305,10 +305,10 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
                   return (
                     <label
                       key={s.key}
-                      className={`cursor-pointer relative flex flex-col p-4 rounded-xl border transition-all duration-300 ${
+                      className={`cursor-pointer relative flex flex-col p-4 rounded-xl border transition-all duration-300 stage-select-card ${
                         isSelected 
-                          ? 'bg-[#0b2535] border-[#43e6d2] shadow-[0_0_20px_rgba(67,230,210,0.15)] ring-1 ring-[#43e6d2]' 
-                          : 'bg-[#040e1b]/80 border-[var(--line)] hover:border-[#43e6d2]/50 hover:bg-[#071727]'
+                          ? 'stage-selected shadow-[0_0_20px_rgba(67,230,210,0.15)] ring-1 ring-[var(--cyan)]' 
+                          : ''
                       }`}
                     >
                       <input
@@ -321,17 +321,17 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
                       />
                       <div className="flex items-center justify-between mb-3">
                         <span className={`text-xs font-mono font-bold tracking-wider px-2.5 py-1 rounded-md ${
-                          isSelected ? 'bg-[#43e6d2]/20 text-[#43e6d2]' : 'bg-[#102238] text-[var(--muted)]'
+                          isSelected ? 'bg-[var(--cyan)]/20 text-[var(--cyan)]' : 'bg-[var(--navy-3)] text-[var(--muted)]'
                         }`}>
                           {s.num}
                         </span>
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                          isSelected ? 'bg-[#43e6d2] text-[#040e1b]' : 'bg-[#0a1b2e] text-[var(--muted)]'
+                          isSelected ? 'bg-[var(--cyan)] text-[#040e1b]' : 'bg-[var(--navy-3)] text-[var(--muted)]'
                         }`}>
                           <Glyph name={s.icon as any} />
                         </div>
                       </div>
-                      <strong className={`text-sm font-semibold tracking-wide ${isSelected ? 'text-white' : 'text-[var(--ink)]'}`}>
+                      <strong className={`text-sm font-semibold tracking-wide ${isSelected ? 'text-[var(--ink)] font-bold' : 'text-[var(--ink)]'}`}>
                         {isArabic ? s.ar : s.en}
                       </strong>
                     </label>

@@ -145,7 +145,7 @@ export const OpportunityConfidenceScatter: React.FC<OpportunityConfidenceScatter
       <div style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          style={{ width: '100%', height: 'auto', minWidth: '560px', display: 'block', background: '#051120ab', borderRadius: '12px', border: '1px solid var(--line)' }}
+          style={{ width: '100%', height: 'auto', minWidth: '560px', display: 'block', background: 'var(--navy-2)', borderRadius: '12px', border: '1px solid var(--line)' }}
         >
           {/* Quadrant Background Shading */}
           <rect x={xScale(midX)} y={yScale(100)} width={chartWidth - (xScale(midX) - padding.left)} height={yScale(midY) - yScale(100)} fill="#43e6d2" fillOpacity="0.04" />
@@ -276,11 +276,11 @@ export const OpportunityConfidenceScatter: React.FC<OpportunityConfidenceScatter
                 position: 'absolute',
                 top: `${Math.max(10, tooltipPos.y - 95)}px`,
                 left: `${Math.min(width - 240, Math.max(10, tooltipPos.x - 110))}px`,
-                background: '#081626f5',
-                border: '1px solid #43e6d26b',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--line-strong)',
                 borderRadius: '10px',
                 padding: '12px 14px',
-                boxShadow: '0 12px 35px rgba(0,0,0,0.6)',
+                boxShadow: '0 12px 35px rgba(0,0,0,0.2)',
                 pointerEvents: 'none',
                 zIndex: 50,
                 width: '230px',
@@ -294,7 +294,7 @@ export const OpportunityConfidenceScatter: React.FC<OpportunityConfidenceScatter
                   <span>{trend.icon}</span> {trend.label}
                 </span>
               </div>
-              <strong style={{ fontSize: '12px', color: '#fff', display: 'block', margin: '4px 0' }}>
+              <strong style={{ fontSize: '12px', color: 'var(--ink)', display: 'block', margin: '4px 0' }}>
                 {isArabic ? hoveredIdea.title.ar : hoveredIdea.title.en}
               </strong>
               <div style={{ fontSize: '10px', color: 'var(--muted)', display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
@@ -311,7 +311,7 @@ export const OpportunityConfidenceScatter: React.FC<OpportunityConfidenceScatter
             position: 'absolute',
             top: '12px',
             right: '12px',
-            background: '#051120f0',
+            background: 'var(--card-bg)',
             border: '1px solid var(--line)',
             borderRadius: '8px',
             padding: '10px 14px',

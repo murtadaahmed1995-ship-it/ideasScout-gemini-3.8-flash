@@ -10,7 +10,7 @@ export const Brand: React.FC<BrandProps> = ({ compact = false, wordClassName = '
   return (
     <span className={`inline-flex items-center gap-3.5 px-3 py-2 my-1.5 transition-all duration-300 ${compact ? 'scale-95 origin-left px-1.5' : ''}`}>
       <span 
-        className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#040e1b] border border-[#43e6d2]/40 shadow-[0_0_22px_rgba(67,230,210,0.22)]" 
+        className="brand-icon-box relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#040e1b] border border-[#43e6d2]/40 shadow-[0_0_22px_rgba(67,230,210,0.22)] transition-all" 
         aria-hidden="true"
       >
         <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
@@ -35,7 +35,7 @@ export const Brand: React.FC<BrandProps> = ({ compact = false, wordClassName = '
       </span>
       {!compact && (
         <span 
-          className={`font-sans text-[22px] font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300 ${wordClassName}`.trim()} 
+          className={`brand-word-title font-sans text-[22px] font-extrabold tracking-wide ${wordClassName}`.trim()} 
           style={{ ...wordStyle, fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif', letterSpacing: '-0.025em' }}
         >
           IdeaScout

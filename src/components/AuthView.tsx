@@ -246,14 +246,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   ];
 
   return (
-    <div style={{
+    <div className="auth-modal-overlay" style={{
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(5, 9, 20, 0.85)',
-      backdropFilter: 'blur(16px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -261,22 +259,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
       padding: '20px',
       overflowY: 'auto'
     }}>
-      <div style={{
-        background: mode === 'register'
-          ? 'linear-gradient(135deg, rgba(20, 32, 64, 0.88), rgba(10, 18, 38, 0.96))'
-          : 'linear-gradient(135deg, rgba(16, 26, 52, 0.88), rgba(9, 15, 32, 0.96))',
-        border: mode === 'register'
-          ? '1px solid rgba(82, 232, 172, 0.35)'
-          : '1px solid rgba(67, 230, 210, 0.35)',
+      <div className={`auth-modal-card ${mode === 'register' ? 'mode-register' : ''}`} style={{
         borderRadius: '26px',
         padding: '36px',
         maxWidth: '480px',
         width: '100%',
         maxHeight: '90vh',
         overflowY: 'auto',
-        boxShadow: mode === 'register'
-          ? '0 30px 70px rgba(0, 0, 0, 0.75), 0 0 40px rgba(82, 232, 172, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          : '0 30px 70px rgba(0, 0, 0, 0.75), 0 0 40px rgba(67, 230, 210, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '22px',
@@ -284,14 +273,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <span className="panel-kicker" style={{ color: mode === 'register' ? '#52e8ac' : 'var(--cyan)' }}>
+            <span className="panel-kicker" style={{ color: mode === 'register' ? '#0d9488' : 'var(--cyan)' }}>
               {step === 'verify'
                 ? (isArabic ? 'التحقق الإلزامي للبريد' : 'MANDATORY EMAIL VERIFICATION')
                 : mode === 'register'
                   ? (isArabic ? 'بوابة تسجيل الحساب الجديد' : 'FOUNDER REGISTRATION PORTAL')
                   : (isArabic ? 'بوابة تسجيل الدخول' : 'SECURE SIGN IN PORTAL')}
             </span>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', marginTop: '4px' }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', marginTop: '4px' }}>
               {step === 'verify'
                 ? (isArabic ? 'تأكيد بريدك الإلكتروني' : 'Verify Your Email Address')
                 : (mode === 'register' ? (isArabic ? 'إنشاء حساب جديد للمنصة' : 'Create Platform Account') : (isArabic ? 'تسجيل الدخول لمساحة العمل' : 'Sign In to Workspace'))}
@@ -300,7 +289,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => { setStep('form'); onClose(); }}
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', cursor: 'pointer' }}
+            style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', cursor: 'pointer' }}
           >
             <X className="w-5 h-5" />
           </button>
@@ -308,7 +297,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         {/* Mode Switcher Tabs */}
         {step === 'form' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'rgba(11, 19, 41, 0.8)', padding: '5px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--navy-2)', padding: '5px', borderRadius: '12px', border: '1px solid var(--line)' }}>
             <button
               type="button"
               onClick={() => { setMode('signin'); setErrorMessage(''); setSuccessMessage(''); }}
@@ -474,7 +463,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     placeholder={isArabic ? 'أدخل اسمك الكامل' : 'Enter your full name'}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'rgba(11, 19, 41, 0.7)', border: '1px solid var(--line)', borderRadius: '12px', color: '#fff', fontSize: '14px', backdropFilter: 'blur(4px)' }}
+                    style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontSize: '14px', backdropFilter: 'blur(4px)' }}
                   />
                 </div>
               </div>
@@ -492,7 +481,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'rgba(11, 19, 41, 0.7)', border: '1px solid var(--line)', borderRadius: '12px', color: '#fff', fontSize: '14px', backdropFilter: 'blur(4px)' }}
+                  style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontSize: '14px', backdropFilter: 'blur(4px)' }}
                 />
               </div>
             </div>
@@ -509,7 +498,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   placeholder={isArabic ? 'أدخل كلمة المرور' : 'Enter your password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'rgba(11, 19, 41, 0.7)', border: '1px solid var(--line)', borderRadius: '12px', color: '#fff', fontSize: '14px', backdropFilter: 'blur(4px)' }}
+                  style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontSize: '14px', backdropFilter: 'blur(4px)' }}
                 />
               </div>
             </div>
@@ -530,10 +519,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     style={{
                       width: '100%',
                       padding: '11px 14px 11px 42px',
-                      background: 'rgba(11, 19, 41, 0.7)',
+                      background: 'var(--navy-2)',
                       border: matchError ? '1px solid rgba(248, 113, 113, 0.6)' : '1px solid var(--line)',
                       borderRadius: '12px',
-                      color: '#fff',
+                      color: 'var(--ink)',
                       fontSize: '14px',
                       backdropFilter: 'blur(4px)'
                     }}
@@ -559,7 +548,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     <select
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'rgba(11, 19, 41, 0.7)', border: '1px solid var(--line)', borderRadius: '12px', color: '#fff', fontSize: '13px', backdropFilter: 'blur(4px)' }}
+                      style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontSize: '13px', backdropFilter: 'blur(4px)' }}
                     >
                       {rolesList.map((r) => (
                         <option key={r.id} value={r.id}>{r.label}</option>
@@ -579,7 +568,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       placeholder={isArabic ? 'اكتب نبذة أو وصفاً تفصيلياً لعلاقتك بالمشروع أو تخصصك الدقيق...' : 'Write custom details about your background, relationship or contribution...'}
                       value={roleDescription}
                       onChange={(e) => setRoleDescription(e.target.value)}
-                      style={{ width: '100%', padding: '10px 14px 10px 42px', background: 'rgba(11, 19, 41, 0.7)', border: '1px solid var(--line)', borderRadius: '12px', color: '#fff', fontSize: '13px', resize: 'none', backdropFilter: 'blur(4px)' }}
+                      style={{ width: '100%', padding: '10px 14px 10px 42px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontSize: '13px', resize: 'none', backdropFilter: 'blur(4px)' }}
                     />
                   </div>
                 </div>
