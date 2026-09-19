@@ -4,6 +4,7 @@ import { Glyph } from '../Glyph';
 import { EvidenceProgressRing, evaluateStability } from '../EvidenceProgressRing';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import { AnimatedCounter } from '../AnimatedCounter';
+import { OpportunityScoreRing } from '../OpportunityScoreRing';
 
 interface ReportViewProps {
   isArabic: boolean;
@@ -90,48 +91,55 @@ export const ReportView: React.FC<ReportViewProps> = ({
     contradiction: { en: 'Contradiction', ar: 'تعارض مباشر', tone: 'tone-crimson' }
   };
 
+  // Ensure report summary is clean, well-punctuated, and not sliced mid-word from legacy cache
+  const cleanSummary = React.useMemo(() => {
+    const raw = isArabic ? report.summary.ar : report.summary.en;
+    if (!raw) return idea.description || '';
+    if (
+      (raw.includes('Derived intelligence assessment evaluating') && raw.includes('Distinguishes Opportunity')) ||
+      (raw.includes('تقييم ذكاء استنتاجي يفحص') && raw.includes('يفصل بوضوح بين جاذبية الفرصة'))
+    ) {
+      return idea.description || raw;
+    }
+    return raw;
+  }, [report.summary, idea.description, isArabic]);
+
   return (
     <div className="view-stack report-view">
       {/* Report Top Hero */}
       <section className="panel report-hero-panel">
         <div className="report-hero-header">
-          <div>
+          <div className="report-hero-main">
             <div className="report-badge-row">
               <span className="stage-pill">{stageLabels[idea.stage]}</span>
               {idea.isSample && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    padding: '3px 10px',
-                    borderRadius: '999px',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: 'var(--muted)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)'
-                  }}
-                >
+                <span className="sample-demo-pill">
                   {isArabic ? 'نموذج تجريبي' : 'Sample Demo'}
                 </span>
               )}
               <span className="analysis-timestamp">
-                {isArabic ? 'تاريخ التقييم: ' : 'Evaluated on '}
-                {new Date(report.generatedAt).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
+                <Glyph name="calendar" />
+                <span>
+                  {isArabic ? 'تاريخ التقييم: ' : 'Evaluated: '}
+                  {new Date(report.generatedAt).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </span>
               </span>
               <span className="evidence-coverage-badge">
                 <Glyph name="signal" />
-                {isArabic ? 'تغطية الأدلة: ' : 'Evidence Coverage: '}
+                <span>{isArabic ? 'تغطية الأدلة: ' : 'Evidence Coverage: '}</span>
                 <AnimatedCounter value={evidenceSummary.coverage} suffix="%" />
               </span>
             </div>
-            <h1>{isArabic ? idea.title.ar : idea.title.en}</h1>
-            <MarkdownRenderer className="report-summary">
-              {isArabic ? report.summary.ar : report.summary.en}
-            </MarkdownRenderer>
+            <h1 className="report-hero-title">{isArabic ? idea.title.ar : idea.title.en}</h1>
+            <div className="report-summary-box">
+              <MarkdownRenderer className="report-summary">
+                {cleanSummary}
+              </MarkdownRenderer>
+            </div>
           </div>
 
           <div className="report-actions">
@@ -181,16 +189,13 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <small>{isArabic ? '0-100 (10 أبعاد استراتيجية)' : '0-100 (10 Strategic Dimensions)'}</small>
             </div>
             <div className="score-box-body">
-              <div
-                key={report.opportunityScore}
-                className="score-ring score-ring-large"
-                style={{ ['--score' as any]: `${report.opportunityScore * 3.6}deg` }}
-              >
-                <div className="score-ring-inner">
-                  <strong><AnimatedCounter value={report.opportunityScore} /></strong>
-                  <span>{isArabic ? 'الفرصة' : 'Opportunity'}</span>
-                </div>
-              </div>
+              <OpportunityScoreRing
+                score={report.opportunityScore}
+                size="large"
+                isArabic={isArabic}
+                label={isArabic ? 'الفرصة' : 'Opportunity'}
+                id="report-opportunity-gauge"
+              />
               <p className="score-box-desc">
                 {isArabic
                   ? 'يقيس الجاذبية الهيكلية وحجم المشكلة والقيمة والقدرة التنافسية.'
@@ -304,11 +309,16 @@ export const ReportView: React.FC<ReportViewProps> = ({
             </div>
 
             <div className="dimension-list">
-              {report.dimensions.map((d) => (
-                <div key={d.key} className="dimension-row">
+              {report.dimensions.map((d, index) => (
+                <div 
+                  key={d.key} 
+                  className="dimension-row" 
+                  id={`dimension-row-${d.key}`}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                   <div>
                     <span>{isArabic ? d.label.ar : d.label.en}</span>
-                    <strong>{d.score}</strong>
+                    <strong><AnimatedCounter value={d.score} /></strong>
                   </div>
                   <div className="mini-track">
                     <i style={{ width: `${d.score}%` }} />

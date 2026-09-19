@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Idea, Question, Stage } from '../../types';
 import {
   calculateInputReadiness,
   generateContextualQuestions,
+  generateDescriptiveTags,
   isMeaningfulAnswer,
   validateOpportunityInput
 } from '../../utils/engine';
 import { Glyph } from '../Glyph';
+import { AnimatedCounter } from '../AnimatedCounter';
 
 interface AnalyzeViewProps {
   isArabic: boolean;
@@ -177,6 +179,11 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
   const readiness = calculateInputReadiness(description, stage, answers);
   const answeredCount = Object.values(answers).filter(isMeaningfulAnswer).length;
   
+  // Real-time automatic descriptive tags based on idea content
+  const autoDetectedTags = useMemo(() => {
+    return generateDescriptiveTags(description, ideaTitle, answers);
+  }, [description, ideaTitle, answers]);
+
   // Authoritative shared semantic validation
   const validation = validateOpportunityInput(description, stage, answers);
   const canAnalyze = validation.canProceed;
@@ -193,6 +200,10 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
     e.preventDefault();
     if (!canAnalyze || !ideaTitle.trim()) return;
     setIsSubmitting(true);
+    const tagsToSave = autoDetectedTags.length > 0
+      ? autoDetectedTags
+      : generateDescriptiveTags(description, ideaTitle, answers);
+
     setTimeout(() => {
       onSaveAnalysis({
         title: {
@@ -201,6 +212,7 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
         },
         description,
         stage,
+        tags: tagsToSave,
         questions,
         answers
       });
@@ -219,62 +231,39 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
     <div className="view-stack analyze-view">
       <div className="analyze-layout phase2-analyze-layout">
         {/* Step 1: Describe Form */}
-        <section className="panel idea-input-panel">
-          <div className="panel-topline">
-            <div>
-              <span className="panel-kicker" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {isArabic ? '01 صِف' : '01 DESCRIBE'}
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '10px',
-                  padding: '2px 8px',
-                  borderRadius: '999px',
-                  border: '1px solid',
-                  borderColor: saveStatus === 'saving' ? '#f59e0b40' : '#43e6d240',
-                  background: saveStatus === 'saving' ? '#f59e0b14' : '#43e6d214',
-                  color: saveStatus === 'saving' ? '#fcd34d' : '#43e6d2',
-                  fontWeight: 600,
-                  letterSpacing: '0.04em'
-                }}>
-                  <span style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: saveStatus === 'saving' ? '#fcd34d' : '#43e6d2',
-                    boxShadow: saveStatus === 'saved' ? '0 0 6px #43e6d2' : 'none'
-                  }} />
+        <section className="panel idea-input-panel" id="analyze-describe-card">
+          <div className="panel-topline analyze-panel-topline">
+            <div className="analyze-topline-main">
+              <div className="analyze-kicker-cluster">
+                <span className="panel-kicker">
+                  {isArabic ? '01 صِف' : '01 DESCRIBE'}
+                </span>
+                <span className="draft-saved-pill" id="analyze-draft-status-pill">
+                  <span className={`draft-dot ${saveStatus === 'saving' ? 'saving' : 'saved'}`} />
                   {saveStatus === 'saving'
                     ? (isArabic ? 'جاري الحفظ...' : 'Saving draft...')
                     : (isArabic ? `حفظ تلقائي ${lastSavedTime ? `(${lastSavedTime})` : ''}` : `Draft Saved ${lastSavedTime ? `(${lastSavedTime})` : ''}`)}
                 </span>
-              </span>
-              <h2>{isArabic ? 'اشرح الفرصة كما تراها' : 'Explain the opportunity as you see it'}</h2>
+              </div>
+              <h2 className="analyze-card-heading">
+                {isArabic ? 'اشرح الفرصة كما تراها' : 'Explain the opportunity as you see it'}
+              </h2>
             </div>
-            <span className="field-meta">
+            <span className="field-meta analyze-char-counter" id="analyze-char-counter">
               {description.length} / 1800 {isArabic ? 'حرفاً' : 'chars'}
             </span>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <label htmlFor="template-select" style={{ fontSize: '0.875rem', color: 'var(--muted)', fontWeight: 500 }}>
+            <div className="template-select-bar" id="analyze-template-bar">
+              <label htmlFor="template-select" className="template-select-label">
                 {isArabic ? 'اختر قالب (اختياري):' : 'Use a Template (Optional):'}
               </label>
               <select
                 id="template-select"
                 value={selectedTemplate}
                 onChange={handleApplyTemplate}
-                style={{
-                  background: 'var(--navy-3)',
-                  border: '1px solid var(--line)',
-                  color: 'var(--text)',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
+                className="template-select-dropdown"
               >
                 <option value="">{isArabic ? 'بدون قالب (فارغ)' : 'None (Blank)'}</option>
                 {TEMPLATES.map(t => (
@@ -296,6 +285,60 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
                   : 'Who is this for? What urgent problem do they face today? How will they know it works? What is the current manual workaround?'
               }
             />
+
+            {/* Live Auto-detected Descriptive Tags Preview */}
+            {description.trim().length >= 8 && autoDetectedTags.length > 0 && (
+              <div
+                className="detected-tags-banner"
+                id="analyze-detected-tags"
+                style={{
+                  margin: '10px 0 16px',
+                  padding: '8px 12px',
+                  background: 'rgba(67, 230, 210, 0.05)',
+                  border: '1px solid rgba(67, 230, 210, 0.22)',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: 'var(--cyan)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <Glyph name="spark" />
+                  {isArabic ? 'الوسوم الوصفية المولدة تلقائياً:' : 'Auto-detected descriptive tags:'}
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                  {autoDetectedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="idea-tag-chip"
+                      style={{
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        background: 'rgba(67, 230, 210, 0.12)',
+                        borderColor: 'rgba(67, 230, 210, 0.35)'
+                      }}
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+                <small style={{ color: 'var(--muted)', fontSize: '10px', marginInlineStart: 'auto' }}>
+                  {isArabic
+                    ? 'ستظهر هذه الوسوم على بطاقة الفكرة في الخزنة'
+                    : 'Visible on Vault card'}
+                </small>
+              </div>
+            )}
 
             <fieldset className="stage-fieldset border-0 p-0 m-0">
               <legend className="text-sm font-medium text-[var(--muted)] mb-3">{isArabic ? 'مرحلة الفكرة الحالية' : 'Current idea stage'}</legend>
@@ -341,12 +384,12 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
             </fieldset>
 
             {/* Input Readiness Display */}
-            <div className="readiness-card">
+            <div className="readiness-card" id="analyze-input-readiness-card">
               <div>
                 <span className="panel-kicker">
                   {isArabic ? 'جاهزية المدخلات' : 'INPUT READINESS'}
                 </span>
-                <strong>{readiness} / 100</strong>
+                <strong><AnimatedCounter value={readiness} /> / 100</strong>
                 <small>
                   {readiness < 40
                     ? (isArabic ? 'اكتب 40 حرفاً على الأقل وحدد المشكلة والعميل' : 'Write at least 40 characters and specify problem & customer')

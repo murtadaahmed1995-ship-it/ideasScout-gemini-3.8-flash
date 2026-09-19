@@ -22,8 +22,6 @@ export type ChatRoleId = 'evaluator' | 'market' | 'critic' | 'legal' | 'experime
 
 export type GeminiModelId =
   | 'gemini-3.8-flash'
-  | 'gemini-3.5-flash'
-  | 'gemini-3.5-flash-lite'
   | 'gemini-3.1-flash-lite'
   | 'gemini-3.1-pro-preview';
 
@@ -61,7 +59,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Separates unverified assumptions from proof & measures readiness',
       ar: 'يفصل الافتراضات غير المثبتة عن الأدلة الحقيقية ويقيس الجاهزية'
     },
-    recommendedModel: 'gemini-3.5-flash-lite',
+    recommendedModel: 'gemini-3.8-flash',
     defaultSuggestions: {
       en: [
         'What is my biggest unverified assumption right now?',
@@ -91,7 +89,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Analyzes market dynamics, acquisition loops & competitive moats',
       ar: 'يحلل ديناميكيات السوق وقنوات الاستحواذ والميزات التنافسية'
     },
-    recommendedModel: 'gemini-3.5-flash-lite',
+    recommendedModel: 'gemini-3.8-flash',
     defaultSuggestions: {
       en: [
         'What is our ideal beachhead market for fast early traction?',
@@ -121,7 +119,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Uncovers lethal blindspots, churn traps & distribution friction',
       ar: 'يكشف مكامن الخطر الخفية، وفخاخ التسرب، وعقبات التوزيع'
     },
-    recommendedModel: 'gemini-3.5-flash-lite',
+    recommendedModel: 'gemini-3.1-pro-preview',
     defaultSuggestions: {
       en: [
         'What are the top 3 lethal reasons this idea could fail in month 3?',
@@ -181,7 +179,7 @@ const ROLES: Record<ChatRoleId, ChatRoleConfig> = {
       en: 'Designs 48-72h falsification tests with clear quantitative thresholds',
       ar: 'يصمم اختبارات إثبات ودحض رشيقة خلال 48-72 ساعة بمعايير رقمية'
     },
-    recommendedModel: 'gemini-3.5-flash-lite',
+    recommendedModel: 'gemini-3.8-flash',
     defaultSuggestions: {
       en: [
         'Design a 48-hour pre-order landing page test with pass/fail metrics.',
@@ -236,23 +234,11 @@ const MODEL_CONFIGS: Record<GeminiModelId, { label: string; descEn: string; desc
     descEn: 'Default recommended model: balanced speed and high analytical fidelity.',
     descAr: 'النموذج الافتراضي المعتمد: توازن فائق بين السرعة والدقة التحليلية.'
   },
-  'gemini-3.5-flash': {
-    label: 'gemini-3.5-flash',
-    tag: 'General',
-    descEn: 'Ideal for general planning, experiment templates, and structured tasks.',
-    descAr: 'مثالي للمهام العامة، وبناء قوالب التجارب، والتخطيط المنظم.'
-  },
-  'gemini-3.5-flash-lite': {
-    label: 'gemini-3.5-flash-lite',
-    tag: 'Fast',
-    descEn: 'Extremely low latency for immediate responses and rapid iteration.',
-    descAr: 'أسرع نموذج للمهام الفورية والرد السريع.'
-  },
   'gemini-3.1-flash-lite': {
     label: 'gemini-3.1-flash-lite',
     tag: 'Fast',
-    descEn: 'Ultra-low latency for rapid math, quick feedback, and fast iterations.',
-    descAr: 'سرعة استجابة فائقة للحسابات السريعة والملاحظات الفورية.'
+    descEn: 'Ultra-low latency for rapid iteration, instant feedback, and math.',
+    descAr: 'سرعة استجابة فائقة للمهام الفورية والرد السريع.'
   },
   'gemini-3.1-pro-preview': {
     label: 'gemini-3.1-pro-preview',

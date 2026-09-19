@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Brand } from './Brand';
 import { Glyph } from './Glyph';
 import { FAQSection } from './FAQSection';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Menu, X as CloseIcon, Globe } from 'lucide-react';
 
 interface LandingPageProps {
   onOpenWorkspace: (target?: 'dashboard' | 'analyze' | 'vault' | boolean) => void;
@@ -35,6 +35,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [isSendingFeedback, setIsSendingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -143,60 +144,199 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <Brand wordClassName="landing-header-brand-word" />
         </button>
 
-        <nav className="marketing-links">
-          <a href="#how">{isArabic ? 'كيف يعمل' : 'How it works'}</a>
-          <a href="#signals">{isArabic ? 'المنهجية' : 'Methodology'}</a>
+        <div className="landing-nav-actions flex items-center gap-2">
+          <nav className="marketing-links">
+            <a href="#how" className="hidden lg:inline-block">{isArabic ? 'كيف يعمل' : 'How it works'}</a>
+            <a href="#signals" className="hidden lg:inline-block">{isArabic ? 'المنهجية' : 'Methodology'}</a>
+
+            {/* Crystal-clear dual language selector pill */}
+            <div 
+              className="top-lang-switch-pill" 
+              role="group"
+              aria-label={isArabic ? 'تبديل لغة الواجهة' : 'Switch interface language'}
+            >
+              <button
+                type="button"
+                className={`top-lang-btn ${isArabic ? 'active' : ''}`}
+                onClick={() => !isArabic && onToggleLanguage()}
+                aria-pressed={isArabic}
+                title="التحويل للغة العربية"
+              >
+                عربي
+              </button>
+              <span className="top-lang-divider" aria-hidden="true">|</span>
+              <button
+                type="button"
+                className={`top-lang-btn ${!isArabic ? 'active' : ''}`}
+                onClick={() => isArabic && onToggleLanguage()}
+                aria-pressed={!isArabic}
+                title="Switch to English"
+              >
+                English
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="language-button inline-flex items-center gap-1.5"
+              onClick={onToggleTheme}
+              title={isArabic ? 'تبديل المظهر (داكن / فاتح)' : 'Toggle Theme (Navy / Light)'}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-slate-700" />
+                  <span className="hidden xl:inline">{isArabic ? 'داكن' : 'Dark'}</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-[var(--cyan)]" />
+                  <span className="hidden xl:inline">{isArabic ? 'فاتح' : 'Light'}</span>
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              className="text-button whitespace-nowrap"
+              onClick={() => onOpenWorkspace(false)}
+            >
+              {isArabic ? 'مساحة العمل' : 'Workspace'}
+            </button>
+            <button
+              type="button"
+              className="text-button whitespace-nowrap"
+              onClick={onOpenSignIn}
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              {isArabic ? 'تسجيل الدخول' : 'Sign In'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary whitespace-nowrap"
+              onClick={onOpenRegister}
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              {isArabic ? 'حساب جديد' : 'Register'}
+            </button>
+          </nav>
+
+          {/* Mobile hamburger menu toggle */}
           <button
             type="button"
-            className="language-button"
-            onClick={onToggleLanguage}
+            className="landing-mobile-menu-toggle md:hidden p-2 rounded-lg border border-[var(--line)] text-[var(--muted)] hover:text-[var(--ink)] hover:border-[var(--line-strong)] transition-colors focus:outline-none"
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            aria-label={isMobileNavOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMobileNavOpen}
           >
-            {isArabic ? 'EN' : 'العربية'}
-          </button>
-          <button
-            type="button"
-            className="language-button inline-flex items-center gap-1.5"
-            onClick={onToggleTheme}
-            title={isArabic ? 'تبديل المظهر (داكن / فاتح)' : 'Toggle Theme (Navy / Light)'}
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? (
-              <>
-                <Moon className="w-3.5 h-3.5 text-slate-700" />
-                <span>{isArabic ? 'داكن' : 'Navy'}</span>
-              </>
+            {isMobileNavOpen ? (
+              <CloseIcon className="w-5 h-5 text-[var(--cyan)]" />
             ) : (
-              <>
-                <Sun className="w-3.5 h-3.5 text-[var(--cyan)]" />
-                <span>{isArabic ? 'فاتح' : 'Light'}</span>
-              </>
+              <Menu className="w-5 h-5" />
             )}
           </button>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => onOpenWorkspace(false)}
-          >
-            {isArabic ? 'مساحة العمل' : 'Workspace'}
-          </button>
-          <button
-            type="button"
-            className="text-button"
-            onClick={onOpenSignIn}
-            style={{ fontSize: '12px', padding: '6px 12px' }}
-          >
-            {isArabic ? 'تسجيل الدخول' : 'Sign In'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onOpenRegister}
-            style={{ fontSize: '12px', padding: '6px 12px' }}
-          >
-            {isArabic ? 'حساب جديد' : 'Register'}
-          </button>
-        </nav>
+        </div>
       </header>
+
+      {/* Mobile Slide-down Navigation Drawer */}
+      {isMobileNavOpen && (
+        <div className="landing-mobile-nav-sheet md:hidden">
+          <div className="landing-mobile-nav-backdrop" onClick={() => setIsMobileNavOpen(false)} />
+          <nav className="landing-mobile-nav-content" aria-label="Mobile Navigation">
+            <div className="mobile-nav-links-list">
+              <a
+                href="#how"
+                onClick={() => setIsMobileNavOpen(false)}
+                className="mobile-nav-item"
+              >
+                <Glyph name="spark" />
+                <span>{isArabic ? 'كيف يعمل' : 'How it works'}</span>
+              </a>
+              <a
+                href="#signals"
+                onClick={() => setIsMobileNavOpen(false)}
+                className="mobile-nav-item"
+              >
+                <Glyph name="signal" />
+                <span>{isArabic ? 'المنهجية والأدلة' : 'Methodology & Evidence'}</span>
+              </a>
+              <a
+                href="#faq"
+                onClick={() => setIsMobileNavOpen(false)}
+                className="mobile-nav-item"
+              >
+                <Glyph name="vault" />
+                <span>{isArabic ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}</span>
+              </a>
+            </div>
+
+            <div className="mobile-nav-controls">
+              <button
+                type="button"
+                className="mobile-nav-btn language-button flex items-center justify-center gap-2"
+                onClick={() => {
+                  onToggleLanguage();
+                }}
+              >
+                <Globe className="w-4 h-4 text-[var(--cyan)]" />
+                <span>{isArabic ? 'Switch to English (EN)' : 'التحويل للغة العربية (عربي)'}</span>
+              </button>
+
+              <button
+                type="button"
+                className="mobile-nav-btn language-button flex items-center justify-center gap-2"
+                onClick={() => {
+                  onToggleTheme();
+                }}
+              >
+                {theme === 'light' ? (
+                  <>
+                    <Moon className="w-4 h-4 text-slate-700" />
+                    <span>{isArabic ? 'الوضع الداكن (Navy)' : 'Navy Dark Theme'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun className="w-4 h-4 text-[var(--cyan)]" />
+                    <span>{isArabic ? 'الوضع الفاتح (Light)' : 'Light Clean Theme'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="mobile-nav-actions">
+              <button
+                type="button"
+                className="btn btn-secondary w-full"
+                onClick={() => {
+                  setIsMobileNavOpen(false);
+                  onOpenSignIn();
+                }}
+              >
+                {isArabic ? 'تسجيل الدخول' : 'Sign In'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary w-full"
+                onClick={() => {
+                  setIsMobileNavOpen(false);
+                  onOpenRegister();
+                }}
+              >
+                {isArabic ? 'إنشاء حساب جديد' : 'Register Account'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary w-full"
+                onClick={() => {
+                  setIsMobileNavOpen(false);
+                  onOpenWorkspace(false);
+                }}
+              >
+                {isArabic ? 'دخول مساحة العمل' : 'Enter Workspace'}
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
 
       {/* Main Marketing Sections */}
       <main>

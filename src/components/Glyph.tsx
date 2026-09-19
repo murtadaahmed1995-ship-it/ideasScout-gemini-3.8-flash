@@ -25,6 +25,7 @@ export const Glyph: React.FC<GlyphProps> = ({ name }) => {
     share: '↗',
     link: '🔗',
     mail: '✉',
+    calendar: '◷',
   };
 
   return (

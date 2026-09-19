@@ -2,6 +2,7 @@ import React from 'react';
 import { Idea, Profile, WorkspaceView } from '../../types';
 import { Glyph } from '../Glyph';
 import { AnimatedCounter } from '../AnimatedCounter';
+import { OpportunityScoreRing } from '../OpportunityScoreRing';
 
 interface DashboardViewProps {
   isArabic: boolean;
@@ -199,16 +200,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="opportunity-body">
-            <div
-              key={topIdea.opportunityScore}
-              className="score-ring score-ring-large"
-              style={{ ['--score' as any]: `${topIdea.opportunityScore * 3.6}deg` }}
-            >
-              <div className="score-ring-inner">
-                <strong><AnimatedCounter value={topIdea.opportunityScore} /></strong>
-                <span>{isArabic ? 'الفرصة' : 'Opportunity'}</span>
-              </div>
-            </div>
+            <OpportunityScoreRing
+              score={topIdea.opportunityScore}
+              size="large"
+              isArabic={isArabic}
+              label={isArabic ? 'الفرصة' : 'Opportunity'}
+              id="dashboard-top-opportunity-ring"
+            />
 
             <div className="score-context">
               <span className="status-badge status-strong">

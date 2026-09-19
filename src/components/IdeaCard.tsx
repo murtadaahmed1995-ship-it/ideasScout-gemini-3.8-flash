@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Idea, Stage } from '../types';
 import { Glyph } from './Glyph';
 import { Sparkline } from './Sparkline';
+import { generateDescriptiveTags } from '../utils/engine';
+import { OpportunityScoreRing } from './OpportunityScoreRing';
 
 export interface IdeaCardProps {
   idea: Idea;
@@ -70,10 +72,28 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
     );
   };
 
+  // Automatically derive descriptive tags if tags are empty or legacy placeholder
+  const displayTags = useMemo(() => {
+    if (
+      idea.tags &&
+      idea.tags.length > 0 &&
+      !(idea.tags.length === 1 && idea.tags[0] === 'New-Hypothesis')
+    ) {
+      return idea.tags;
+    }
+    return generateDescriptiveTags(
+      idea.description || '',
+      typeof idea.title === 'string'
+        ? idea.title
+        : idea.title?.en || idea.title?.ar || '',
+      idea.answers || {}
+    );
+  }, [idea.tags, idea.description, idea.title, idea.answers]);
+
   const handleAddTag = () => {
     const trimmed = newTagText.trim();
     if (trimmed) {
-      const currentTags = idea.tags || [];
+      const currentTags = displayTags;
       if (!currentTags.includes(trimmed)) {
         onUpdateIdeaTags?.(idea.id, [...currentTags, trimmed]);
       }
@@ -83,7 +103,7 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    const currentTags = idea.tags || [];
+    const currentTags = displayTags;
     onUpdateIdeaTags?.(
       idea.id,
       currentTags.filter((t) => t !== tagToRemove)
@@ -148,7 +168,7 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
 
       {/* Custom Tagging System */}
       <div className="idea-tags-row" id={`idea-tags-${idea.id}`}>
-        {(idea.tags || []).map((tag) => (
+        {displayTags.map((tag) => (
           <span key={tag} className="idea-tag-chip">
             #{tag}
             <button
@@ -199,15 +219,13 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
       <div className="idea-score-line" id={`idea-score-line-${idea.id}`}>
         {/* Opportunity Score + Trend Indicator */}
         <div className="opportunity-score-group">
-          <div
-            key={idea.opportunityScore}
-            className="score-ring score-ring-small"
-            style={{ ['--score' as any]: `${idea.opportunityScore * 3.6}deg` }}
-          >
-            <div className="score-ring-inner">
-              <strong>{idea.opportunityScore}</strong>
-            </div>
-          </div>
+          <OpportunityScoreRing
+            score={idea.opportunityScore}
+            size="small"
+            isArabic={isArabic}
+            showDeltaBadge={false}
+            id={`idea-opp-gauge-${idea.id}`}
+          />
 
           <div className="opportunity-trend-meta">
             <span className="score-meta-label">

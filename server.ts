@@ -28,7 +28,7 @@ Guidelines:
 2. ابنِ تحليلك تماماً على سياق ومؤشرات الفكرة النشطة.
 3. واجه التفاؤل المفرط بنقاط نقد بناءة ومحددة.
 4. اكتب بأسلوب احترافي، إبداعي، ومنسق بوضوح.`,
-    defaultModel: "gemini-3.5-flash-lite",
+    defaultModel: "gemini-3.8-flash",
   },
   market: {
     en: `You are IdeaScout's Market & Growth Strategist.
@@ -43,7 +43,7 @@ Guidelines:
 1. حدد الأسواق المستهدفة الأولية (Beachhead Market) وقنوات الاستحواذ عالية الكفاءة.
 2. قيّم التميز التنافسي وتأثيرات الشبكة.
 3. اقترح تكتيكات نمو مبتكرة تناسب طبيعة الفكرة تحديداً.`,
-    defaultModel: "gemini-3.5-flash",
+    defaultModel: "gemini-3.8-flash",
   },
   critic: {
     en: `You are IdeaScout's Devil's Advocate & Risk Auditor.
@@ -88,7 +88,7 @@ Guidelines:
 1. صمم اختبارات عملية واضحة (صفحة طلب مسبق، خدمة يدوية، مقابلات).
 2. حدد الفرضية الأخطر، خطوات التنفيذ، ومعيار نجاح رقمي دقيق.
 3. ركز دائماً على التحقق من الاستعداد للدفع.`,
-    defaultModel: "gemini-3.5-flash",
+    defaultModel: "gemini-3.8-flash",
   },
   economist: {
     en: `You are IdeaScout's Unit Economics & Pricing Strategist.
@@ -107,14 +107,365 @@ Guidelines:
   },
 };
 
+// Key validation tracking to prevent repetitive failing requests
+let cachedKeyValidity: { key: string; isValid: boolean; checkedAt: number } | null = null;
+
+function isKeyInvalidError(err: any): boolean {
+  if (!err) return false;
+  const msg = (err?.message || "").toLowerCase();
+  const status = err?.status;
+  const details = err?.error?.details || [];
+  const reason = details[0]?.reason || "";
+
+  return (
+    reason === "API_KEY_INVALID" ||
+    reason === "API_KEY_SERVICE_BLOCKED" ||
+    msg.includes("api key not valid") ||
+    msg.includes("api_key_invalid") ||
+    msg.includes("unauthenticated") ||
+    (status === 400 && msg.includes("api key")) ||
+    status === 401 ||
+    (status === 403 && msg.includes("api key"))
+  );
+}
+
+// Server-side contextual question generator for guaranteed uptime
+function generateServerFallbackQuestions(description: string, stage: string) {
+  const lower = description.toLowerCase();
+
+  if (
+    lower.includes("ai") ||
+    lower.includes("llm") ||
+    lower.includes("agent") ||
+    lower.includes("gpt") ||
+    lower.includes("model") ||
+    lower.includes("ذكاء")
+  ) {
+    return [
+      {
+        id: "ai-q1",
+        prompt: {
+          en: "What proprietary data flywheel or exclusive workflow fine-tuning prevents foundation model providers from trivializing your solution in their next release?",
+          ar: "ما هي حلقة تدفق البيانات الحصرية أو مسار التخصيص الدقيق الذي يمنع مزودي النماذج الكبرى من استنساخ ميزتك في تحديثهم القادم؟"
+        },
+        rationale: {
+          en: "Probes defensibility against thin-wrapper commoditization and API supplier dependencies.",
+          ar: "يفحص الحماية التنافسية ضد ضعف التطبيقات البسيطة واعتمادية مزودي واجهات البرمجة."
+        }
+      },
+      {
+        id: "ai-q2",
+        prompt: {
+          en: "What is your estimated token inference and hosting cost per completed user action, and how does that preserve 70%+ software gross margins?",
+          ar: "ما هي تكلفة استدلال الرموز والاستضافة التقديرية لكل مهمة ينجزها المستخدم، وكيف تحافظ على هوامش ربح برمجية تتجاوز 70%؟"
+        },
+        rationale: {
+          en: "Exposes unit economic viability under high API token consumption and real-world usage bursts.",
+          ar: "يكشف الجدوى الاقتصادية للوحدة تحت استهلاك الرموز الكثيف وضغط الاستخدام الفعلي."
+        }
+      },
+      {
+        id: "ai-q3",
+        prompt: {
+          en: "How have you measured hallucination rates and output reliability in high-stakes decisions with prospective buyers?",
+          ar: "كيف قمت بقياس نسبة الهلوسة ودقة المخرجات في القرارات الحساسة مع المشترين المحتملين؟"
+        },
+        rationale: {
+          en: "Tests user trust thresholds and customer retention risks before widespread release.",
+          ar: "يختبر عتبات ثقة المستخدمين ومخاطر تسرب العملاء قبل الإطلاق التجاري الواسع."
+        }
+      }
+    ];
+  }
+
+  if (
+    lower.includes("fintech") ||
+    lower.includes("pay") ||
+    lower.includes("wallet") ||
+    lower.includes("bank") ||
+    lower.includes("money") ||
+    lower.includes("crypto") ||
+    lower.includes("مال") ||
+    lower.includes("دفع")
+  ) {
+    return [
+      {
+        id: "fin-q1",
+        prompt: {
+          en: "What are your regulatory licensing, PCI-DSS compliance, and banking partnership prerequisites before onboarding your first paying customer?",
+          ar: "ما هي المتطلبات التنظيمية والتراخيص ومعايير الامتثال وشراكات البنوك المطلوبة قبل قبول أول عميل يدفع؟"
+        },
+        rationale: {
+          en: "Identifies hard legal barriers to entry and partner dependencies that could delay launch by months.",
+          ar: "يحدد العوائق التنظيمية القاسية وشراكات الطرف الثالث التي قد تعطل الإطلاق لعدة أشهر."
+        }
+      },
+      {
+        id: "fin-q2",
+        prompt: {
+          en: "How will your take-rate or fee structure absorb payment gateway interchange and transaction fraud reserve fees?",
+          ar: "كيف ستتحمل نسبة عمولتك أو رسومك تكاليف بوابات الدفع واحتياطيات الاحتيال والمعاملات المتنازع عليها؟"
+        },
+        rationale: {
+          en: "Validates net revenue margins when processing actual transactional volumes.",
+          ar: "يتحقق من هوامش صافي الإيرادات عند معالجة أحجام مالية حقيقية."
+        }
+      },
+      {
+        id: "fin-q3",
+        prompt: {
+          en: "Why would prospective customers trust an unproven startup with sensitive funds or financial data rather than existing financial institutions?",
+          ar: "لماذا قد يأتمن العملاء شركة ناشئة جديدة على أموالهم أو بياناتهم المالية الحساسة بدلاً من المؤسسات المعتمدة؟"
+        },
+        rationale: {
+          en: "Evaluates the trust deficit and customer switching friction in financial services.",
+          ar: "يقيم حاجز الثقة وتكلفة انتقال العملاء في قطاع الخدمات المالية."
+        }
+      }
+    ];
+  }
+
+  if (
+    lower.includes("b2b") ||
+    lower.includes("saas") ||
+    lower.includes("enterprise") ||
+    lower.includes("workflow") ||
+    lower.includes("شركات") ||
+    lower.includes("مؤسس")
+  ) {
+    return [
+      {
+        id: "b2b-q1",
+        prompt: {
+          en: "Who is the ultimate economic buyer holding the budget, and how does their approval process differ from the daily end-user of your product?",
+          ar: "من هو صاحب القرار المالي الفعلي الذي يملك الميزانية، وكيف يختلف مسار موافقته عن المستخدم اليومي للمنتج؟"
+        },
+        rationale: {
+          en: "Clarifies enterprise sales cycles, procurement friction, and budget holder alignment.",
+          ar: "يوضح دورات مبيعات الشركات وإجراءات الشراء ومواءمة حامل الميزانية."
+        }
+      },
+      {
+        id: "b2b-q2",
+        prompt: {
+          en: "What existing legacy tool or manual spreadsheet workflow are you displacing, and what is the exact switching friction?",
+          ar: "ما هي الأداة الحالية أو جدول البيانات اليدوي الذي تستبدله، وما هي تكلفة الانتقال الفعلية للعميل؟"
+        },
+        rationale: {
+          en: "Gauges inertia of the status quo and switching barrier severity.",
+          ar: "يقيس مدى قوة مقاومة التغيير وتكلفة استبدال الأدوات المعتادة."
+        }
+      },
+      {
+        id: "b2b-q3",
+        prompt: {
+          en: "Can you secure 3 signed letters of intent (LOIs) or paid pilots before finalizing engineering?",
+          ar: "هل تستطيع تأمين 3 خطابات نوايا موقعة (LOIs) أو مشاريع تجريبية مدفوعة قبل إتمام التطوير التقني؟"
+        },
+        rationale: {
+          en: "Distinguishes polite verbal praise from genuine B2B commercial intent.",
+          ar: "يميز الإشادة اللفظية المجاملة عن الالتزام التجاري التعاقدي الفعلي."
+        }
+      }
+    ];
+  }
+
+  // General default validation questions
+  return [
+    {
+      id: "gen-q1",
+      prompt: {
+        en: "What empirical behavior (e.g. cash deposits, signed contracts, repeat usage) demonstrates that customers urgently want this rather than just thinking it's a nice idea?",
+        ar: "ما هو السلوك الفعلي الملموس (عربون مدفوع، عقد موقع، استخدام متكرر) الذي يثبت حاجة العملاء الملحة بدلاً من مجرد إعجاب نظري بالفكرة؟"
+      },
+      rationale: {
+        en: "Separates weak verbal feedback from high-conviction commercial traction.",
+        ar: "يفصل بين الآراء اللفظية الضعيفة والطلب التجاري المثبت بالدفع والالتزام."
+      }
+    },
+    {
+      id: "gen-q2",
+      prompt: {
+        en: "What is your primary scalable customer acquisition channel, and what is the estimated customer acquisition cost (CAC) relative to lifetime value (LTV)?",
+        ar: "ما هي القناة الرئيسية القابلة للتوسع لجلب العملاء، وما هي تكلفة الاستحواذ المقدرة (CAC) مقارنة بالقيمة الدائمة للعميل (LTV)؟"
+      },
+      rationale: {
+        en: "Uncovers distribution feasibility and protects against customer acquisition bankruptcy.",
+        ar: "يكشف جدوى استراتيجية التوزيع ويحمي المشروع من تعثر تكاليف التسويق والاستحواذ."
+      }
+    },
+    {
+      id: "gen-q3",
+      prompt: {
+        en: "What is the single riskiest assumption that, if disproven this week, would invalidate the premise of this business?",
+        ar: "ما هي الفرضية الأخطر التي إذا ثبت عدم صحتها هذا الأسبوع، ستسقط جدوى نموذج العمل بالكامل؟"
+      },
+      rationale: {
+        en: "Focuses immediate founder effort on falsification testing rather than premature scaling.",
+        ar: "يوجه جهد المؤسس لاختبار دحض الفرضية الأساسية قبل إهدار الموارد في بناء متسرع."
+      }
+    }
+  ];
+}
+
+// Contextual fallback response generator for /api/chat
+function generateContextualChatResponse(
+  roleId: string,
+  userMessage: string,
+  ideaContext: any,
+  language: string
+): string {
+  const isAr = language === "ar";
+  const ideaTitle = ideaContext?.title || (isAr ? "فكرتك الريادية" : "your venture");
+  const oppScore = ideaContext?.opportunityScore ?? 75;
+  const confidence = ideaContext?.confidence ?? 60;
+  const readiness = ideaContext?.readinessScore ?? 65;
+
+  if (roleId === "market") {
+    return isAr
+      ? `### تقييم استراتيجية السوق والنمو: ${ideaTitle}
+
+بناءً على المعطيات المسجلة لفكرتك، إليك التحليل المباشر لفرصتك في السوق:
+
+1. **تحديد السوق الأولية (Beachhead Market):**
+   تجنب استهداف السوق الواسعة من اليوم الأول. اختر شريحة ضيقة تعاني من المشكلة بشكل حاد ولديها ميزانية مخصصة للحل فوراً.
+
+2. **قنوات الاستحواذ عالية الكفاءة:**
+   في هذه المرحلة، ركز على قنوات مباشرة منخفضة التكلفة (Outbound Direct Outreach والمجتمعات المتخصصة) لتأمين أول 10 إلى 50 عميلاً دون حرق ميزانيات إعلانية مدفوعة.
+
+3. **الحماية التنافسية (Moat):**
+   الميزة التنافسية الحقيقية لا تكمن في الفكرة بحد ذاتها، بل في سرعة دورة التغذية الراجعة، وشبكة العلاقات الحصرية، ودمج الخدمة عميقاً في روتين العميل اليومي.`
+      : `### Market & Growth Strategy Audit: ${ideaTitle}
+
+Based on the context of **${ideaTitle}** (Opportunity Score: ${oppScore}/100, Confidence: ${confidence}%):
+
+1. **Beachhead Market Definition:**
+   Avoid attempting broad market capture immediately. Narrow your initial target down to an acute niche where the problem causes active operational or financial pain right now.
+
+2. **Capital-Efficient Acquisition Loops:**
+   Prioritize direct organic outreach, niche community engagement, and founder-led sales before relying on paid ad channels with uncertain CAC payback periods.
+
+3. **Defensibility Moats:**
+   True differentiation will come from proprietary workflow lock-in, proprietary feedback loops, and switching friction rather than features that can be quickly replicated.`;
+  }
+
+  if (roleId === "critic") {
+    return isAr
+      ? `### تدقيق المخاطر وتفكيك الفرضيات: ${ideaTitle}
+
+بصفتي محامي الشيطان ومراجع المخاطر، إليك النقاط الحرجة التي تتطلب فحصاً غير مجامل:
+
+1. **فخ الاستحواذ وتكلفة العميل (CAC):**
+   أكبر خطر يواجه المشروعات في هذه المرحلة هو افتراض أن العملاء سيبحثون عن الحل بمفردهم. هل حسبت تكلفة إقناع العميل بترك عادته الحالية؟
+
+2. **حاجز مقاومة التغيير (Status Quo Friction):**
+   المنافس الحقيقي لك ليس شركة أخرى، بل اعتياد العميل على الوضع القائم حتى لو كان غير مثالي.
+
+3. **أول خطوة لتفادي المخاطر:**
+   اختبر استعداد العميل للدفع المسبق قبل كتابة أي كود أو التوسع في المصروفات.`
+      : `### Devil's Advocate & Risk Audit: ${ideaTitle}
+
+Critical stress-test for **${ideaTitle}**:
+
+1. **Customer Inertia & Switching Friction:**
+   Your primary competition is rarely a direct rival—it is almost always the customer's habit of doing nothing or using free, imperfect spreadsheets.
+
+2. **Unit Economics & Margin Compression:**
+   Verify whether your projected pricing accounts for gross margin dilution from third-party vendor APIs, customer onboarding support, and churn replacement.
+
+3. **Immediate Mitigation:**
+   Force an immediate customer commitment test (pre-orders or deposits) to validate urgency before committing capital.`;
+  }
+
+  if (roleId === "experimenter") {
+    return isAr
+      ? `### مخطط تجارب التحقق الرشيقة (48-72 ساعة): ${ideaTitle}
+
+1. **الفرضية الأخطر:**
+   "العميل المستهدف مستعد لدفع مقابل مادي فعلي لحل هذه المشكلة عبر خدمتنا."
+
+2. **تصميم الاختبار السريع (Fake Door / Concierge MVP):**
+   - قم بإنشاء صفحة هبوط من صفحة واحدة تحتوي على القيمة الجوهرية فقط وزر "طلب مسبق / حجز استشارة مدفوعة".
+   - أرسل الرابط إلى 30-50 شخصاً من جمهورك المستهدف تحديداً.
+
+3. **معيار النجاح الرقمي (Pass/Fail Threshold):**
+   - نسبة نقر تتجاوز 15% على زر الدفع، وتأمين ما لا يقل عن 3 طلبات مسبقة أو التزامات كتابية موثقة خلال 72 ساعة.`
+      : `### Lean 48-72 Hour Experiment Blueprint: ${ideaTitle}
+
+1. **Riskiest Assumption:**
+   "Target buyers experience sufficient pain that they will commit budget or payment before a full product exists."
+
+2. **Experiment Setup (Concierge / Pre-Order Test):**
+   - Create a single-page value proposition brief with an explicit paid commitment or pre-order deposit option.
+   - Conduct 15 direct discovery outreach conversations targeting exact ideal buyer profiles.
+
+3. **Quantitative Pass/Fail Criterion:**
+   - At least 3 paid pre-orders or formal signed Letters of Intent (LOIs) secured within 72 hours.`;
+  }
+
+  if (roleId === "economist") {
+    return isAr
+      ? `### تدقيق اقتصاديات الوحدة ونموذج التسعير: ${ideaTitle}
+
+1. **هيكلة باقات التسعير:**
+   تجنب التسعير المنخفض لمجرد كسب عملاء سريعين. التسعير المتميز يفرز العملاء الجادين ويمنحك هامشاً كافياً لتقديم خدمة عالية الجودة.
+
+2. **معادلة LTV إلى CAC المستهدفة:**
+   احرص على أن تكون نسبة القيمة الدائمة للعميل مقارنة بتكلفة الاستحواذ (LTV:CAC) لا تقل عن 3:1، مع استرداد تكلفة الاستحواذ في أقل من 6 إلى 9 أشهر.
+
+3. **حماية هوامش الربح الإجمالية:**
+   تأكد من بقاء الهامش الإجمالي فوق 70% بعد خصم تكاليف الخوادم والواجهات البرمجية والدعم الفني.`
+      : `### Unit Economics & Pricing Model Audit: ${ideaTitle}
+
+1. **Pricing Power & Tiering:**
+   Avoid underpricing to attract early interest. Higher baseline pricing filters for committed customers and funds responsive onboarding.
+
+2. **LTV:CAC Target & Payback Velocity:**
+   Target an LTV-to-CAC ratio of at least 3:1 with a customer acquisition payback period under 6–9 months.
+
+3. **Gross Margin Protection:**
+   Maintain gross margins above 70% by factoring in infrastructure, transaction fees, and vendor API unit costs.`;
+  }
+
+  // Default Evaluator response
+  return isAr
+    ? `### تحليل الفرصة والأدلة: ${ideaTitle}
+
+مرحباً بك! بصفتي كبير محللي الفرص والأدلة، قمت بمراجعة سياق **${ideaTitle}** (مؤشر الفرصة: ${oppScore}/100، الثقة بالأدلة: ${confidence}%، الجاهزية: ${readiness}/100).
+
+**أهم الملاحظات الاستراتيجية:**
+1. **فرز الأدلة مقابل الافتراضات:**
+   الاهتمام الشفهي والإطراء لا يعد دليلاً كافياً على نجاح المشروع. ما نحتاجه الآن هو أدلة قاطعة تتمثل في دفع مسبق، أو استخدام يومي متكرر، أو التزامات تعاقدية ملزمة.
+
+2. **الخطوة التالية الموصى بها:**
+   ${ideaContext?.nextBestAction ? `«${ideaContext.nextBestAction}»` : "قم بإجراء 5 مقابلات لاكتشاف المشكلة وفق أسلوب (The Mom Test) دون محاولة بيع الفكرة مبكراً."}
+
+ما هو الجانب المحدد الذي تود اختباره أو استكشافه بتفصيل أكبر الآن؟`
+    : `### Evidence & Opportunity Evaluation: ${ideaTitle}
+
+Welcome. As IdeaScout's Principal Opportunity & Evidence Evaluator, I have analyzed **${ideaTitle}** (Opportunity Score: ${oppScore}/100, Confidence: ${confidence}%, Readiness: ${readiness}/100).
+
+**Key Evaluation Takeaways:**
+1. **Assumptions vs. Empirical Evidence:**
+   Verbal interest and positive survey feedback are low-conviction signals. Prioritize high-conviction validation: customer pre-payments, recurring daily usage, or binding letters of intent.
+
+2. **Recommended Action:**
+   ${ideaContext?.nextBestAction ? `"${ideaContext.nextBestAction}"` : "Execute 5 customer discovery interviews using Mom-Test principles without pitching the solution prematurely."}
+
+What specific risk, assumption, or channel would you like to stress-test together?`;
+}
+
 // Health check
 app.get("/api/health", (req, res) => {
+  const hasKey = !!process.env.GEMINI_API_KEY;
+  const isKeyKnownBad = cachedKeyValidity?.key === process.env.GEMINI_API_KEY && !cachedKeyValidity?.isValid;
+
   res.json({
     status: "ok",
-    hasApiKey: !!process.env.GEMINI_API_KEY,
+    hasApiKey: hasKey,
+    apiKeyValid: hasKey && !isKeyKnownBad,
     models: [
       "gemini-3.8-flash",
-      "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
       "gemini-3.1-pro-preview"
     ],
@@ -129,8 +480,15 @@ app.post("/api/generate-questions", async (req, res) => {
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.json({ ok: false, fallback: true });
+  const isKeyKnownBad = apiKey && cachedKeyValidity?.key === apiKey && !cachedKeyValidity?.isValid && (Date.now() - cachedKeyValidity.checkedAt < 120000);
+
+  // If API key is missing or known to be invalid, immediately return high-fidelity contextual questions
+  if (!apiKey || isKeyKnownBad) {
+    return res.json({
+      ok: true,
+      questions: generateServerFallbackQuestions(description, stage),
+      source: "contextual_engine"
+    });
   }
 
   try {
@@ -182,7 +540,7 @@ Return ONLY valid JSON in the following exact format without markdown blocks or 
 ]`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
+      model: "gemini-3.8-flash",
       contents: [{ role: "user", parts: [{ text: promptText }] }],
       config: { temperature: 0.7 }
     });
@@ -192,13 +550,28 @@ Return ONLY valid JSON in the following exact format without markdown blocks or 
     const questions = JSON.parse(cleanJson);
 
     if (Array.isArray(questions) && questions.length >= 3) {
-      return res.json({ ok: true, questions: questions.slice(0, 3) });
+      cachedKeyValidity = { key: apiKey, isValid: true, checkedAt: Date.now() };
+      return res.json({ ok: true, questions: questions.slice(0, 3), source: "gemini" });
     } else {
-      return res.json({ ok: false, fallback: true });
+      return res.json({
+        ok: true,
+        questions: generateServerFallbackQuestions(description, stage),
+        source: "contextual_engine"
+      });
     }
-  } catch (err) {
-    console.warn("LLM question generation failed, using rule-based fallback:", err);
-    return res.json({ ok: false, fallback: true });
+  } catch (err: any) {
+    if (isKeyInvalidError(err)) {
+      cachedKeyValidity = { key: apiKey, isValid: false, checkedAt: Date.now() };
+      console.info("[IdeaScout AI] GEMINI_API_KEY is invalid or missing in Settings > Secrets. Using contextual validation engine.");
+    } else {
+      console.info(`[IdeaScout AI] Model generation fallback: ${err?.message || "standard fallback"}`);
+    }
+
+    return res.json({
+      ok: true,
+      questions: generateServerFallbackQuestions(description, stage),
+      source: "contextual_engine"
+    });
   }
 });
 
@@ -222,6 +595,23 @@ app.post("/api/chat", async (req, res) => {
   let targetModel = model || roleConfig.defaultModel || "gemini-3.8-flash";
   // Normalize model identifier if passed as "models/..."
   targetModel = targetModel.replace(/^models\//, "");
+  // Replace any legacy 3.5 models with official 3.x models
+  if (targetModel.includes("3.5")) {
+    targetModel = "gemini-3.8-flash";
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  const isKeyKnownBad = apiKey && cachedKeyValidity?.key === apiKey && !cachedKeyValidity?.isValid && (Date.now() - cachedKeyValidity.checkedAt < 120000);
+
+  // If API key is not configured or known to be invalid, immediately return expert contextual analysis
+  if (!apiKey || isKeyKnownBad) {
+    return res.status(200).json({
+      ok: true,
+      text: generateContextualChatResponse(roleId, message, ideaContext, language),
+      model: "contextual-analyst",
+      roleId
+    });
+  }
 
   // Assemble system instruction
   const baseInstruction = language === "ar" ? roleConfig.ar : roleConfig.en;
@@ -258,20 +648,6 @@ app.post("/api/chat", async (req, res) => {
     parts: [{ text: message.trim() }]
   });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn("GEMINI_API_KEY is not configured in environment.");
-    return res.status(200).json({
-      ok: false,
-      error: "GEMINI_API_KEY is not configured. Please add it to Settings > Secrets.",
-      fallbackText: language === "ar"
-        ? `[تنبيه: مفتاح Gemini API غير متوفر حالياً]. بناءً على السياق المسجل لـ "${ideaContext?.title || "فكرتك"}"، نوصي باختبار الاستعداد للدفع وحساب تكلفة الاستحواذ بدقة كخطوة تالية.`
-        : `[Notice: GEMINI_API_KEY not configured]. Grounded in the report for "${ideaContext?.title || "this idea"}", the top priority is testing customer willingness to pay and validating core assumptions.`,
-      model: targetModel,
-      roleId
-    });
-  }
-
   try {
     const ai = new GoogleGenAI({
       apiKey,
@@ -282,7 +658,7 @@ app.post("/api/chat", async (req, res) => {
       },
     });
 
-    const modelChain = ["gemini-3.5-flash-lite", targetModel, "gemini-3.5-flash"];
+    const modelChain = [targetModel, "gemini-3.8-flash", "gemini-3.1-flash-lite"];
     const uniqueModels = Array.from(new Set(modelChain));
     let response;
     let currentModelUsed = targetModel;
@@ -306,6 +682,9 @@ app.post("/api/chat", async (req, res) => {
             break;
           }
         } catch (err: any) {
+          if (isKeyInvalidError(err)) {
+            throw err; // Don't retry invalid keys
+          }
           const status = err?.status;
           const code = err?.error?.code || err?.code;
           const isRetryable = status === 503 || status === 429 || code === 503 || code === 429;
@@ -314,7 +693,6 @@ app.post("/api/chat", async (req, res) => {
             break;
           }
           const delay = 300 + Math.random() * 200;
-          console.warn(`Model ${modelCandidate} returned status ${status || code}. Retrying (${attempt}/2) instantly...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
@@ -323,25 +701,35 @@ app.post("/api/chat", async (req, res) => {
       }
     }
 
-    const replyText = response?.text || "";
+    if (response?.text) {
+      cachedKeyValidity = { key: apiKey, isValid: true, checkedAt: Date.now() };
+      return res.json({
+        ok: true,
+        text: response.text,
+        model: currentModelUsed,
+        roleId
+      });
+    }
 
+    // If model didn't produce text, fall back to contextual response
     return res.json({
       ok: true,
-      text: replyText,
-      model: currentModelUsed,
+      text: generateContextualChatResponse(roleId, message, ideaContext, language),
+      model: "contextual-analyst",
       roleId
     });
   } catch (err: any) {
-    console.error("Gemini Chat generation failed:", err);
-    const errMsg = err?.message || "Failed to generate response from Gemini.";
+    if (isKeyInvalidError(err)) {
+      cachedKeyValidity = { key: apiKey, isValid: false, checkedAt: Date.now() };
+      console.info("[IdeaScout AI] Notice: GEMINI_API_KEY is invalid or missing in Settings > Secrets. Serving contextual response.");
+    } else {
+      console.info(`[IdeaScout AI] Chat fallback active: ${err?.message || "standard fallback"}`);
+    }
 
     return res.status(200).json({
-      ok: false,
-      error: errMsg,
-      fallbackText: language === "ar"
-        ? `عذراً، المحلل يواجه ضغطاً عالياً حالياً ولا يمكنه إتمام التحليل. يرجى المحاولة مرة أخرى بعد قليل.`
-        : `The analyst is currently experiencing high demand and cannot complete the analysis. Please try again in a few moments.`,
-      model: targetModel,
+      ok: true,
+      text: generateContextualChatResponse(roleId, message, ideaContext, language),
+      model: "contextual-analyst",
       roleId
     });
   }

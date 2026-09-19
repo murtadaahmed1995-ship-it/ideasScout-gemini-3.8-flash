@@ -1268,8 +1268,8 @@ export function evaluateIdea(
       ar: titleWords || 'فرصة جديدة'
     },
     summary: {
-      en: `Derived intelligence assessment evaluating ${desc.slice(0, 110)}... Distinguishes Opportunity (${opportunityScore}/100), Evidence Confidence (${confidence}%), and Validation Readiness (${readinessScore}%).`,
-      ar: `تقييم ذكاء استنتاجي يفحص ${desc.slice(0, 110)}... يفصل بوضوح بين جاذبية الفرصة (${opportunityScore}/100)، وثقة الأدلة (${confidence}%)، وجاهزية التحقق (${readinessScore}%).`
+      en: desc || 'Systematic validation and opportunity assessment report.',
+      ar: desc || 'تقرير تقييم منهجي لجاذبية الفرصة وجاهزية التحقق.'
     },
     generatedAt: new Date().toISOString(),
     opportunityScore,
@@ -1299,3 +1299,5 @@ export function evaluateIdea(
     evidenceSummary: extracted.summary
   };
 }
+
+export { generateDescriptiveTags } from './tagger';

@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Idea, Stage, WorkspaceView } from '../../types';
 import { Glyph } from '../Glyph';
 import { IdeaCard } from '../IdeaCard';
 import { Sparkline } from '../Sparkline';
 import { OpportunityConfidenceScatter } from '../OpportunityConfidenceScatter';
+import { generateDescriptiveTags } from '../../utils/engine';
 
 export { IdeaCard, Sparkline };
 
@@ -20,7 +22,13 @@ export interface VaultProps {
 }
 
 export type VaultViewProps = VaultProps;
-export type VaultSortOption = 'newest' | 'opportunity' | 'confidence';
+export type VaultSortOption =
+  | 'newest'
+  | 'oldest'
+  | 'opportunity'
+  | 'opportunity_asc'
+  | 'confidence'
+  | 'confidence_asc';
 
 export const VaultView: React.FC<VaultProps> = ({
   isArabic,
@@ -64,11 +72,29 @@ export const VaultView: React.FC<VaultProps> = ({
     };
   }, [isTagDropdownOpen]);
 
+  // Helper to reliably get tags including automatically generated descriptive tags
+  const getItemTags = (item: Idea): string[] => {
+    if (
+      item.tags &&
+      item.tags.length > 0 &&
+      !(item.tags.length === 1 && item.tags[0] === 'New-Hypothesis')
+    ) {
+      return item.tags;
+    }
+    return generateDescriptiveTags(
+      item.description || '',
+      typeof item.title === 'string'
+        ? item.title
+        : item.title?.en || item.title?.ar || '',
+      item.answers || {}
+    );
+  };
+
   // Extract all unique tags across all ideas
   const availableTags = useMemo(() => {
     const tagSet = new Set<string>();
     ideas.forEach((i) => {
-      (i.tags || []).forEach((t) => {
+      getItemTags(i).forEach((t) => {
         if (t.trim()) tagSet.add(t.trim());
       });
     });
@@ -98,7 +124,8 @@ export const VaultView: React.FC<VaultProps> = ({
     const activeTitle = (isArabic ? item.title?.ar : item.title?.en || '').toLowerCase();
     const descText = (item.description || '').toLowerCase();
     const stageText = (item.stage || '').toLowerCase();
-    const tagsText = (item.tags || []).join(' ').toLowerCase();
+    const itemTags = getItemTags(item);
+    const tagsText = itemTags.join(' ').toLowerCase();
     const query = searchTerm.toLowerCase().trim();
 
     const matchesSearch =
@@ -114,7 +141,7 @@ export const VaultView: React.FC<VaultProps> = ({
 
     const matchesTags =
       selectedTags.length === 0 ||
-      selectedTags.some((tag) => (item.tags || []).includes(tag));
+      selectedTags.some((tag) => itemTags.includes(tag));
 
     return matchesSearch && matchesStage && matchesTags;
   });
@@ -154,6 +181,33 @@ export const VaultView: React.FC<VaultProps> = ({
         )
       : 0;
 
+  // Check if current sort order is ascending
+  const isSortAsc =
+    sortOrder === 'oldest' ||
+    sortOrder === 'opportunity_asc' ||
+    sortOrder === 'confidence_asc';
+
+  const toggleSortDirection = () => {
+    setSortOrder((current) => {
+      switch (current) {
+        case 'newest':
+          return 'oldest';
+        case 'oldest':
+          return 'newest';
+        case 'opportunity':
+          return 'opportunity_asc';
+        case 'opportunity_asc':
+          return 'opportunity';
+        case 'confidence':
+          return 'confidence_asc';
+        case 'confidence_asc':
+          return 'confidence';
+        default:
+          return 'newest';
+      }
+    });
+  };
+
   // Sort filtered ideas according to selected sort criteria
   const sortedIdeas = useMemo(() => {
     return [...filteredIdeas].sort((a, b) => {
@@ -162,11 +216,38 @@ export const VaultView: React.FC<VaultProps> = ({
         const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
         return timeB - timeA;
       }
+      if (sortOrder === 'oldest') {
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return timeA - timeB;
+      }
       if (sortOrder === 'opportunity') {
-        return (b.opportunityScore || 0) - (a.opportunityScore || 0);
+        const diff = (b.opportunityScore || 0) - (a.opportunityScore || 0);
+        if (diff !== 0) return diff;
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return timeB - timeA;
+      }
+      if (sortOrder === 'opportunity_asc') {
+        const diff = (a.opportunityScore || 0) - (b.opportunityScore || 0);
+        if (diff !== 0) return diff;
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return timeA - timeB;
       }
       if (sortOrder === 'confidence') {
-        return (b.confidence || 0) - (a.confidence || 0);
+        const diff = (b.confidence || 0) - (a.confidence || 0);
+        if (diff !== 0) return diff;
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return timeB - timeA;
+      }
+      if (sortOrder === 'confidence_asc') {
+        const diff = (a.confidence || 0) - (b.confidence || 0);
+        if (diff !== 0) return diff;
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return timeA - timeB;
       }
       return 0;
     });
@@ -447,17 +528,63 @@ export const VaultView: React.FC<VaultProps> = ({
             <Glyph name="signal" />
             <span>{isArabic ? 'ترتيب:' : 'Sort:'}</span>
           </label>
-          <select
-            id="vault-sort-select"
-            className="vault-sort-select"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as VaultSortOption)}
-            aria-label={isArabic ? 'ترتيب الأفكار حسب' : 'Sort ideas by'}
+          <div className="vault-sort-select-wrapper">
+            <select
+              id="vault-sort-select"
+              className="vault-sort-select"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as VaultSortOption)}
+              aria-label={isArabic ? 'ترتيب الأفكار حسب' : 'Sort ideas by'}
+            >
+              <option value="newest">
+                ▼ {isArabic ? 'الأحدث أولاً (تنازلي)' : 'Newest First'}
+              </option>
+              <option value="oldest">
+                ▲ {isArabic ? 'الأقدم أولاً (تصاعدي)' : 'Oldest First'}
+              </option>
+              <option value="opportunity">
+                ▼ {isArabic ? 'نتيجة الفرصة (الأعلى أولاً)' : 'Opportunity Score (High → Low)'}
+              </option>
+              <option value="opportunity_asc">
+                ▲ {isArabic ? 'نتيجة الفرصة (الأدنى أولاً)' : 'Opportunity Score (Low → High)'}
+              </option>
+              <option value="confidence">
+                ▼ {isArabic ? 'مستوى الثقة (الأعلى أولاً)' : 'Confidence Level (High → Low)'}
+              </option>
+              <option value="confidence_asc">
+                ▲ {isArabic ? 'مستوى الثقة (الأدنى أولاً)' : 'Confidence Level (Low → High)'}
+              </option>
+            </select>
+          </div>
+          <button
+            type="button"
+            id="vault-sort-direction-btn"
+            className={`vault-sort-direction-btn ${isSortAsc ? 'is-asc' : 'is-desc'}`}
+            onClick={toggleSortDirection}
+            title={
+              isSortAsc
+                ? (isArabic
+                    ? 'الترتيب الحالي: تصاعدي ▲ (انقر للتبديل إلى تنازلي ▼)'
+                    : 'Current sort: Ascending ▲ (Click to toggle to Descending ▼)')
+                : (isArabic
+                    ? 'الترتيب الحالي: تنازلي ▼ (انقر للتبديل إلى تصاعدي ▲)'
+                    : 'Current sort: Descending ▼ (Click to toggle to Ascending ▲)')
+            }
+            aria-label={
+              isSortAsc
+                ? (isArabic ? 'ترتيب تصاعدي' : 'Ascending order')
+                : (isArabic ? 'ترتيب تنازلي' : 'Descending order')
+            }
           >
-            <option value="newest">{isArabic ? 'الأحدث' : 'Newest'}</option>
-            <option value="opportunity">{isArabic ? 'نتيجة الفرصة' : 'Opportunity Score'}</option>
-            <option value="confidence">{isArabic ? 'مستوى الثقة' : 'Confidence Level'}</option>
-          </select>
+            {isSortAsc ? (
+              <ChevronUp size={13} className="sort-caret-icon up" aria-hidden="true" />
+            ) : (
+              <ChevronDown size={13} className="sort-caret-icon down" aria-hidden="true" />
+            )}
+            <span className="vault-sort-direction-text">
+              {isSortAsc ? (isArabic ? 'تصاعدي' : 'Asc') : (isArabic ? 'تنازلي' : 'Desc')}
+            </span>
+          </button>
         </div>
 
         {/* New Analysis Action */}
@@ -490,10 +617,18 @@ export const VaultView: React.FC<VaultProps> = ({
           )}
           <span style={{ marginInlineStart: '8px', color: 'var(--muted-2)' }}>
             • {isArabic ? 'مرتب حسب: ' : 'Sorted by: '}
-            <strong style={{ color: 'var(--muted)' }}>
+            <strong style={{ color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              {isSortAsc ? (
+                <ChevronUp size={12} style={{ color: 'var(--cyan)' }} aria-hidden="true" />
+              ) : (
+                <ChevronDown size={12} style={{ color: 'var(--cyan)' }} aria-hidden="true" />
+              )}
               {sortOrder === 'newest' && (isArabic ? 'الأحدث' : 'Newest')}
-              {sortOrder === 'opportunity' && (isArabic ? 'نتيجة الفرصة' : 'Opportunity Score')}
-              {sortOrder === 'confidence' && (isArabic ? 'مستوى الثقة' : 'Confidence Level')}
+              {sortOrder === 'oldest' && (isArabic ? 'الأقدم' : 'Oldest')}
+              {sortOrder === 'opportunity' && (isArabic ? 'نتيجة الفرصة (الأعلى)' : 'Opportunity (High → Low)')}
+              {sortOrder === 'opportunity_asc' && (isArabic ? 'نتيجة الفرصة (الأدنى)' : 'Opportunity (Low → High)')}
+              {sortOrder === 'confidence' && (isArabic ? 'مستوى الثقة (الأعلى)' : 'Confidence (High → Low)')}
+              {sortOrder === 'confidence_asc' && (isArabic ? 'مستوى الثقة (الأدنى)' : 'Confidence (Low → High)')}
             </strong>
           </span>
         </span>

@@ -4,7 +4,7 @@ import { Workspace } from './components/Workspace';
 import { AuthView } from './components/AuthView';
 import { defaultProfile, initialIdeas } from './data/sampleIdeas';
 import { Idea, Profile, WorkspaceView } from './types';
-import { evaluateIdea } from './utils/engine';
+import { evaluateIdea, generateDescriptiveTags } from './utils/engine';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './lib/firebase';
 
@@ -31,7 +31,26 @@ export default function App() {
       const saved = localStorage.getItem('ideascout_ideas');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Backfill any ideas with missing or legacy placeholder tags
+          return parsed.map((item: Idea) => {
+            if (
+              !item.tags ||
+              item.tags.length === 0 ||
+              (item.tags.length === 1 && item.tags[0] === 'New-Hypothesis')
+            ) {
+              const generated = generateDescriptiveTags(
+                item.description || '',
+                typeof item.title === 'string'
+                  ? item.title
+                  : item.title?.en || item.title?.ar || '',
+                item.answers || {}
+              );
+              return { ...item, tags: generated };
+            }
+            return item;
+          });
+        }
       }
     } catch {
       // ignore
@@ -169,6 +188,23 @@ export default function App() {
       }
     };
 
+    // Automatically generate descriptive tags based on idea content (e.g. 'FinTech', 'SaaS', 'Marketplace')
+    const autoTags = generateDescriptiveTags(
+      ideaData.description || '',
+      typeof ideaData.title === 'string'
+        ? ideaData.title
+        : ideaData.title?.en || ideaData.title?.ar || '',
+      ideaData.answers || {}
+    );
+
+    // Merge any explicit user-provided tags with generated tags
+    const providedTags = Array.isArray(ideaData.tags)
+      ? ideaData.tags.filter((t: string) => t && t !== 'New-Hypothesis')
+      : [];
+    const finalTags = providedTags.length > 0
+      ? Array.from(new Set([...providedTags, ...autoTags]))
+      : autoTags;
+
     const newIdea: Idea = {
       id: `idea-${Date.now()}`,
       isSample: false,
@@ -176,7 +212,7 @@ export default function App() {
       title: ideaData.title,
       description: ideaData.description,
       stage: ideaData.stage,
-      tags: Array.isArray(ideaData.tags) && ideaData.tags.length > 0 ? ideaData.tags : ['New-Hypothesis'],
+      tags: finalTags.length > 0 ? finalTags : ['Innovation', 'Digital-Service'],
       opportunityScore: evaluation.opportunityScore,
       confidence: evaluation.confidence,
       readinessScore: evaluation.readinessScore,

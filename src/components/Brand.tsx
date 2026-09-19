@@ -8,12 +8,12 @@ interface BrandProps {
 
 export const Brand: React.FC<BrandProps> = ({ compact = false, wordClassName = '', wordStyle }) => {
   return (
-    <span className={`inline-flex items-center gap-3.5 px-3 py-2 my-1.5 transition-all duration-300 ${compact ? 'scale-95 origin-left px-1.5' : ''}`}>
+    <span className={`inline-flex items-center gap-3 px-2.5 py-1.5 transition-all duration-300 ${compact ? 'scale-95 ltr:origin-left rtl:origin-right px-1' : ''}`}>
       <span 
-        className="brand-icon-box relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#040e1b] border border-[#43e6d2]/40 shadow-[0_0_22px_rgba(67,230,210,0.22)] transition-all" 
+        className="brand-icon-box relative flex items-center justify-center w-9 h-9 rounded-xl bg-[#040e1b] border border-[#43e6d2]/40 shadow-[0_0_20px_rgba(67,230,210,0.2)] transition-all shrink-0" 
         aria-hidden="true"
       >
-        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
+        <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
           {/* Outer Ring */}
           <circle cx="50" cy="50" r="42" stroke="#43e6d2" strokeWidth="6" className="opacity-95" />
           {/* Inner Ring */}
@@ -35,8 +35,8 @@ export const Brand: React.FC<BrandProps> = ({ compact = false, wordClassName = '
       </span>
       {!compact && (
         <span 
-          className={`brand-word-title font-sans text-[22px] font-extrabold tracking-wide ${wordClassName}`.trim()} 
-          style={{ ...wordStyle, fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif', letterSpacing: '-0.025em' }}
+          className={`brand-word-title text-[20px] font-extrabold tracking-tight select-none ${wordClassName}`.trim()} 
+          style={{ ...wordStyle }}
         >
           IdeaScout
         </span>

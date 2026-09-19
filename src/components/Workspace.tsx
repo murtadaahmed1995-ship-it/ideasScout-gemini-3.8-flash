@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Idea, Profile, Stage, WorkspaceView } from '../types';
 import { Brand } from './Brand';
 import { Glyph } from './Glyph';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, X as CloseIcon } from 'lucide-react';
 import { AnalyzeView } from './views/AnalyzeView';
 import { AskView } from './views/AskView';
 import { DashboardView } from './views/DashboardView';
@@ -120,6 +120,15 @@ export const Workspace: React.FC<WorkspaceProps> = ({
     profile: { en: 'Profile & Preferences', ar: 'الملف والتفضيلات' }
   };
 
+  const getDisplayIdeaTitle = (idea?: Idea): string => {
+    if (!idea) return isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en;
+    if (typeof idea.title === 'string') return idea.title;
+    if (isArabic) {
+      return idea.title?.ar || idea.title?.en || (idea.title as any) || '';
+    }
+    return idea.title?.en || idea.title?.ar || (idea.title as any) || '';
+  };
+
   const handleSelectIdea = (idea: Idea, targetView?: WorkspaceView, reportId: string = 'latest') => {
     setSelectedIdeaId(idea.id);
     setSelectedReportId(reportId);
@@ -205,14 +214,24 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           >
             <Brand compact={isSidebarCollapsed} />
           </button>
-          <button
-            type="button"
-            className="sidebar-collapse-button"
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            aria-label="Toggle sidebar"
-          >
-            {isSidebarCollapsed ? (isArabic ? '›' : '‹') : (isArabic ? '‹' : '›')}
-          </button>
+          <div className="sidebar-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              type="button"
+              className="sidebar-collapse-button"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              aria-label="Toggle sidebar"
+            >
+              {isSidebarCollapsed ? (isArabic ? '›' : '‹') : (isArabic ? '‹' : '›')}
+            </button>
+            <button
+              type="button"
+              className="sidebar-close-mobile-btn"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <CloseIcon style={{ width: 18, height: 18 }} />
+            </button>
+          </div>
         </div>
 
         <nav className="sidebar-nav">
@@ -282,92 +301,137 @@ export const Workspace: React.FC<WorkspaceProps> = ({
       {/* Main Area */}
       <div className="app-main">
         {/* Topbar */}
-        <header className="topbar" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button
-              type="button"
-              className="mobile-menu-button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              aria-label="Open menu"
-            >
-              <Glyph name="menu" />
-            </button>
-            <div className="topbar-title" style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-              <span className="topbar-path" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                {isArabic ? 'مساحة العمل' : 'WORKSPACE'} <span style={{ opacity: 0.5 }}>/</span> {isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en}
-              </span>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text-color)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                {['report', 'analyze', 'ask'].includes(currentView) && selectedIdea 
-                  ? (isArabic ? selectedIdea.title.ar : selectedIdea.title.en) 
-                  : (isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en)}
-              </h1>
+        <header className="topbar" id="app-topbar">
+          <div className="topbar-inner">
+            {/* Nav & Controls group (Row 1 on mobile, right-aligned on desktop) */}
+            <div className="topbar-controls-group">
+              <div className="topbar-nav-left">
+                <button
+                  type="button"
+                  className="mobile-menu-button"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  aria-label={isArabic ? 'فتح القائمة الجانبية' : 'Open menu'}
+                  title={isArabic ? 'القائمة' : 'Menu'}
+                  id="topbar-mobile-menu-btn"
+                >
+                  <Glyph name="menu" />
+                </button>
+
+                <button
+                  type="button"
+                  className="topbar-home-btn"
+                  onClick={onReturnToLanding}
+                  title={isArabic ? 'العودة للصفحة التعريفية' : 'Return to Landing Page'}
+                  aria-label={isArabic ? 'الصفحة الرئيسية' : 'Home'}
+                  id="topbar-home-btn"
+                >
+                  <Glyph name="home" />
+                  <span className="topbar-home-label">
+                    {isArabic ? 'الرئيسية' : 'Home'}
+                  </span>
+                </button>
+              </div>
+
+              <div className="topbar-actions" id="topbar-actions-group">
+                {selectedIdea && (currentView === 'report' || currentView === 'vault' || currentView === 'ask') && (
+                  <button
+                    type="button"
+                    className="topbar-action-btn topbar-share-btn"
+                    onClick={() => setIsShareModalOpen(true)}
+                    title={isArabic ? 'مشاركة التقرير' : 'Share Report'}
+                    aria-label={isArabic ? 'مشاركة' : 'Share'}
+                    id="topbar-share-btn"
+                  >
+                    <Glyph name="share" />
+                    <span className="hidden md:inline">
+                      {isArabic ? 'مشاركة' : 'Share'}
+                    </span>
+                  </button>
+                )}
+
+                {/* Clear Dual Language Selector Pill */}
+                <div 
+                  className="top-lang-switch-pill" 
+                  role="group"
+                  aria-label={isArabic ? 'تبديل لغة الواجهة' : 'Switch interface language'}
+                  id="topbar-lang-switch"
+                >
+                  <button
+                    type="button"
+                    className={`top-lang-btn ${isArabic ? 'active' : ''}`}
+                    onClick={() => !isArabic && onToggleLanguage()}
+                    aria-pressed={isArabic}
+                    title="التحويل للغة العربية"
+                  >
+                    عربي
+                  </button>
+                  <span className="top-lang-divider" aria-hidden="true">|</span>
+                  <button
+                    type="button"
+                    className={`top-lang-btn ${!isArabic ? 'active' : ''}`}
+                    onClick={() => isArabic && onToggleLanguage()}
+                    aria-pressed={!isArabic}
+                    title="Switch to English"
+                  >
+                    EN
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="topbar-action-btn topbar-theme-btn"
+                  onClick={onToggleTheme}
+                  title={isArabic ? 'تبديل المظهر (داكن / فاتح)' : 'Toggle Theme (Navy / Light)'}
+                  aria-label={isArabic ? 'تبديل المظهر' : 'Toggle theme'}
+                  id="topbar-theme-toggle-btn"
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Moon className="w-3.5 h-3.5 text-slate-700" />
+                      <span className="hidden lg:inline">{isArabic ? 'داكن' : 'Dark'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sun className="w-3.5 h-3.5 text-[var(--cyan)]" />
+                      <span className="hidden lg:inline">{isArabic ? 'فاتح' : 'Light'}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className="top-profile-button"
+                  onClick={() => setCurrentView('profile')}
+                  aria-label={isArabic ? 'الملف الشخصي' : 'Profile'}
+                  title={profile.name}
+                  id="topbar-profile-btn"
+                >
+                  <span>{getMonogram(profile.name)}</span>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {selectedIdea && (currentView === 'report' || currentView === 'vault' || currentView === 'ask') && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setIsShareModalOpen(true)}
-                title={isArabic ? 'مشاركة التقرير' : 'Share Report'}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--primary)', color: 'var(--primary)', padding: '0.4rem 0.75rem' }}
-              >
-                <Glyph name="share" />
-                <span className="hidden sm:inline" style={{ fontWeight: 600 }}>
-                  {isArabic ? 'مشاركة' : 'Share'}
-                </span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={onReturnToLanding}
-              title={isArabic ? 'العودة لصفحة التعريف' : 'Return to Landing Page'}
-            >
-              <Glyph name="home" />
-              <span className="hidden sm:inline">
-                {isArabic ? 'الرئيسية' : 'Home'}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="language-button"
-              onClick={onToggleLanguage}
-            >
-              {isArabic ? 'EN' : 'العربية'}
-            </button>
-
-            <button
-              type="button"
-              className="language-button inline-flex items-center gap-1.5"
-              onClick={onToggleTheme}
-              title={isArabic ? 'تبديل المظهر (داكن / فاتح)' : 'Toggle Theme (Navy / Light)'}
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-slate-700" />
-                  <span>{isArabic ? 'داكن' : 'Navy'}</span>
-                </>
-              ) : (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-[var(--cyan)]" />
-                  <span>{isArabic ? 'فاتح' : 'Light'}</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="top-profile-button"
-              onClick={() => setCurrentView('profile')}
-              aria-label="Profile"
-            >
-              <span>{getMonogram(profile.name)}</span>
-            </button>
+            {/* Breadcrumb & Title group (Row 2 on mobile, left-aligned on desktop) */}
+            <div className="topbar-title-group" id="topbar-title-section">
+              <div className="topbar-title">
+                <nav className="topbar-path" aria-label="Breadcrumb" dir={isArabic ? 'rtl' : 'ltr'}>
+                  <span className="topbar-path-crumb">{isArabic ? 'مساحة العمل' : 'WORKSPACE'}</span>
+                  <span className="topbar-path-separator" aria-hidden="true">/</span>
+                  <span className="topbar-path-active">{isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en}</span>
+                </nav>
+                <h1 
+                  className="topbar-heading"
+                  id="topbar-page-heading"
+                  title={['report', 'analyze', 'ask'].includes(currentView) && selectedIdea 
+                    ? getDisplayIdeaTitle(selectedIdea) 
+                    : (isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en)}
+                >
+                  {['report', 'analyze', 'ask'].includes(currentView) && selectedIdea 
+                    ? getDisplayIdeaTitle(selectedIdea) 
+                    : (isArabic ? viewTitles[currentView].ar : viewTitles[currentView].en)}
+                </h1>
+              </div>
+            </div>
           </div>
         </header>
 
