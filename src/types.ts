@@ -103,11 +103,22 @@ export interface Analysis {
   evidenceSummary?: EvidenceSummary;
 }
 
+export interface CategoryHierarchyInfo {
+  primaryId: string;
+  primaryName: LocalizedString;
+  subcategoryId?: string;
+  subcategoryName?: LocalizedString;
+}
+
 export interface Idea {
   id: string;
   title: LocalizedString;
   description: string;
   stage: Stage;
+  category?: string;
+  subcategory?: string;
+  categoryPath?: string[];
+  categoryInfo?: CategoryHierarchyInfo;
   tags?: string[];
   opportunityScore: number;
   confidence: number;

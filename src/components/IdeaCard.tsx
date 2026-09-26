@@ -5,6 +5,7 @@ import { Glyph } from './Glyph';
 import { Sparkline } from './Sparkline';
 import { generateDescriptiveTags } from '../utils/engine';
 import { OpportunityScoreRing } from './OpportunityScoreRing';
+import { getCategoryById, getSubcategoryById } from '../data/categories';
 
 export interface IdeaCardProps {
   idea: Idea;
@@ -90,6 +91,32 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
     );
   }, [idea.tags, idea.description, idea.title, idea.answers]);
 
+  const categoryNode = useMemo(() => getCategoryById(idea.category), [idea.category]);
+  const subcategoryNode = useMemo(
+    () => getSubcategoryById(idea.category, idea.subcategory),
+    [idea.category, idea.subcategory]
+  );
+
+  const categoryLabel = idea.categoryInfo?.primaryName
+    ? isArabic
+      ? idea.categoryInfo.primaryName.ar
+      : idea.categoryInfo.primaryName.en
+    : categoryNode
+    ? isArabic
+      ? categoryNode.name.ar
+      : categoryNode.name.en
+    : null;
+
+  const subcategoryLabel = idea.categoryInfo?.subcategoryName
+    ? isArabic
+      ? idea.categoryInfo.subcategoryName.ar
+      : idea.categoryInfo.subcategoryName.en
+    : subcategoryNode
+    ? isArabic
+      ? subcategoryNode.name.ar
+      : subcategoryNode.name.en
+    : null;
+
   const handleAddTag = () => {
     const trimmed = newTagText.trim();
     if (trimmed) {
@@ -165,6 +192,56 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
 
       <h3>{displayTitle}</h3>
       <p className="idea-card-desc">{idea.description}</p>
+
+      {/* Hierarchical Category Hierarchy Badge */}
+      {categoryLabel && (
+        <div
+          className="idea-category-badge-cluster"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            margin: '4px 0 8px',
+            fontSize: '11px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 8px',
+              borderRadius: '6px',
+              background: 'rgba(67, 230, 210, 0.1)',
+              border: '1px solid rgba(67, 230, 210, 0.3)',
+              color: 'var(--cyan)',
+              fontWeight: 700
+            }}
+          >
+            {categoryLabel}
+          </span>
+          {subcategoryLabel && (
+            <>
+              <span style={{ color: 'var(--muted)', fontSize: '10px' }}>›</span>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--line)',
+                  color: '#e2e8f0',
+                  fontWeight: 500
+                }}
+              >
+                {subcategoryLabel}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Custom Tagging System */}
       <div className="idea-tags-row" id={`idea-tags-${idea.id}`}>

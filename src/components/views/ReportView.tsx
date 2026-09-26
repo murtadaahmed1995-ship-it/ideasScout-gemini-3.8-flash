@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { FolderTree } from 'lucide-react';
 import { Idea, ReportTab, Stage } from '../../types';
 import { Glyph } from '../Glyph';
 import { EvidenceProgressRing, evaluateStability } from '../EvidenceProgressRing';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import { AnimatedCounter } from '../AnimatedCounter';
 import { OpportunityScoreRing } from '../OpportunityScoreRing';
+import { getCategoryById, getSubcategoryById } from '../../data/categories';
 
 interface ReportViewProps {
   isArabic: boolean;
@@ -115,6 +117,39 @@ export const ReportView: React.FC<ReportViewProps> = ({
               {idea.isSample && (
                 <span className="sample-demo-pill">
                   {isArabic ? 'نموذج تجريبي' : 'Sample Demo'}
+                </span>
+              )}
+              {(idea.category || idea.categoryInfo) && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '3px 10px',
+                    borderRadius: '999px',
+                    background: 'rgba(67, 230, 210, 0.1)',
+                    border: '1px solid rgba(67, 230, 210, 0.3)',
+                    color: 'var(--cyan)',
+                    fontSize: '11px',
+                    fontWeight: 600
+                  }}
+                >
+                  <FolderTree className="w-3 h-3" />
+                  <span>
+                    {idea.categoryInfo?.primaryName
+                      ? (isArabic ? idea.categoryInfo.primaryName.ar : idea.categoryInfo.primaryName.en)
+                      : (getCategoryById(idea.category)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en'] || idea.category)}
+                  </span>
+                  {(idea.subcategory || idea.categoryInfo?.subcategoryId) && (
+                    <>
+                      <span style={{ opacity: 0.5 }}>›</span>
+                      <span style={{ color: '#fff' }}>
+                        {idea.categoryInfo?.subcategoryName
+                          ? (isArabic ? idea.categoryInfo.subcategoryName.ar : idea.categoryInfo.subcategoryName.en)
+                          : (getSubcategoryById(idea.category, idea.subcategory)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en'] || idea.subcategory)}
+                      </span>
+                    </>
+                  )}
                 </span>
               )}
               <span className="analysis-timestamp">

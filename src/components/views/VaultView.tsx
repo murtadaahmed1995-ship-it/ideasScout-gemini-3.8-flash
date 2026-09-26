@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, FolderTree, ChevronRight, X } from 'lucide-react';
 import { Idea, Stage, WorkspaceView } from '../../types';
 import { Glyph } from '../Glyph';
 import { IdeaCard } from '../IdeaCard';
 import { Sparkline } from '../Sparkline';
 import { OpportunityConfidenceScatter } from '../OpportunityConfidenceScatter';
 import { generateDescriptiveTags } from '../../utils/engine';
+import { IDEA_CATEGORIES, getCategoryById, getSubcategoryById } from '../../data/categories';
 
 export { IdeaCard, Sparkline };
 
@@ -43,26 +44,34 @@ export const VaultView: React.FC<VaultProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStage, setSelectedStage] = useState<string>('All');
   const [sortOrder, setSortOrder] = useState<VaultSortOption>('newest');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('All');
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [selectedIdeaIds, setSelectedIdeaIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'scatter'>('grid');
 
   const tagDropdownRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close tag filter dropdown when clicking outside or pressing Escape
+  // Close tag & category filter dropdowns when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) {
         setIsTagDropdownOpen(false);
       }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setIsCategoryDropdownOpen(false);
+      }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsTagDropdownOpen(false);
+        setIsCategoryDropdownOpen(false);
       }
     };
-    if (isTagDropdownOpen) {
+    if (isTagDropdownOpen || isCategoryDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
     }
@@ -70,7 +79,7 @@ export const VaultView: React.FC<VaultProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isTagDropdownOpen]);
+  }, [isTagDropdownOpen, isCategoryDropdownOpen]);
 
   // Helper to reliably get tags including automatically generated descriptive tags
   const getItemTags = (item: Idea): string[] => {
@@ -126,6 +135,10 @@ export const VaultView: React.FC<VaultProps> = ({
     const stageText = (item.stage || '').toLowerCase();
     const itemTags = getItemTags(item);
     const tagsText = itemTags.join(' ').toLowerCase();
+    const catEn = (item.categoryInfo?.primaryName?.en || '').toLowerCase();
+    const catAr = (item.categoryInfo?.primaryName?.ar || '').toLowerCase();
+    const subEn = (item.categoryInfo?.subcategoryName?.en || '').toLowerCase();
+    const subAr = (item.categoryInfo?.subcategoryName?.ar || '').toLowerCase();
     const query = searchTerm.toLowerCase().trim();
 
     const matchesSearch =
@@ -135,7 +148,11 @@ export const VaultView: React.FC<VaultProps> = ({
       activeTitle.includes(query) ||
       descText.includes(query) ||
       stageText.includes(query) ||
-      tagsText.includes(query);
+      tagsText.includes(query) ||
+      catEn.includes(query) ||
+      catAr.includes(query) ||
+      subEn.includes(query) ||
+      subAr.includes(query);
 
     const matchesStage = selectedStage === 'All' || item.stage === selectedStage;
 
@@ -143,7 +160,17 @@ export const VaultView: React.FC<VaultProps> = ({
       selectedTags.length === 0 ||
       selectedTags.some((tag) => itemTags.includes(tag));
 
-    return matchesSearch && matchesStage && matchesTags;
+    const matchesCategory =
+      selectedCategory === 'All' ||
+      item.category === selectedCategory ||
+      item.categoryPath?.includes(selectedCategory);
+
+    const matchesSubcategory =
+      selectedSubcategory === 'All' ||
+      item.subcategory === selectedSubcategory ||
+      item.categoryPath?.includes(selectedSubcategory);
+
+    return matchesSearch && matchesStage && matchesTags && matchesCategory && matchesSubcategory;
   });
 
   // Calculate metrics based on current filter selection
@@ -254,11 +281,17 @@ export const VaultView: React.FC<VaultProps> = ({
   }, [filteredIdeas, sortOrder]);
 
   const isFiltering =
-    searchTerm.trim().length > 0 || selectedStage !== 'All' || selectedTags.length > 0;
+    searchTerm.trim().length > 0 ||
+    selectedStage !== 'All' ||
+    selectedCategory !== 'All' ||
+    selectedSubcategory !== 'All' ||
+    selectedTags.length > 0;
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedStage('All');
+    setSelectedCategory('All');
+    setSelectedSubcategory('All');
     setSelectedTags([]);
   };
 
@@ -522,6 +555,207 @@ export const VaultView: React.FC<VaultProps> = ({
           )}
         </div>
 
+        {/* Hierarchical Category Filter */}
+        <div
+          className="vault-category-filter-container"
+          ref={categoryDropdownRef}
+          id="vault-category-filter-container"
+          style={{ position: 'relative' }}
+        >
+          <button
+            id="vault-category-filter-button"
+            type="button"
+            className={`vault-tag-filter-btn ${selectedCategory !== 'All' ? 'active' : ''}`}
+            onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+            aria-expanded={isCategoryDropdownOpen}
+            aria-haspopup="true"
+            title={isArabic ? 'تصفية حسب القطاع والتصنيف الهرمي' : 'Filter by hierarchical sector and category'}
+          >
+            <FolderTree className="w-3.5 h-3.5" />
+            <span>
+              {selectedCategory !== 'All'
+                ? getCategoryById(selectedCategory)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en'] ||
+                  (isArabic ? 'القطاع' : 'Category')
+                : isArabic
+                ? 'القطاعات'
+                : 'Categories'}
+            </span>
+            {selectedCategory !== 'All' && (
+              <span className="tag-active-badge">
+                {selectedSubcategory !== 'All' ? '2' : '1'}
+              </span>
+            )}
+          </button>
+
+          {isCategoryDropdownOpen && (
+            <div
+              className="vault-tag-dropdown"
+              id="vault-category-dropdown-menu"
+              style={{
+                width: '300px',
+                maxHeight: '380px',
+                overflowY: 'auto'
+              }}
+            >
+              <div className="vault-tag-dropdown-header">
+                <span>{isArabic ? 'تصفية حسب القطاع والفئة' : 'Filter by Sector & Domain'}</span>
+                {selectedCategory !== 'All' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory('All');
+                      setSelectedSubcategory('All');
+                    }}
+                    id="vault-clear-category-btn"
+                  >
+                    {isArabic ? 'مسح الكل' : 'Clear'}
+                  </button>
+                )}
+              </div>
+
+              <div className="vault-tag-list" style={{ padding: '6px' }}>
+                {/* All Categories option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('All');
+                    setSelectedSubcategory('All');
+                  }}
+                  className={`vault-tag-item ${selectedCategory === 'All' ? 'selected' : ''}`}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    border: 'none',
+                    background: selectedCategory === 'All' ? 'rgba(67, 230, 210, 0.15)' : 'transparent',
+                    cursor: 'pointer',
+                    textAlign: isArabic ? 'right' : 'left'
+                  }}
+                >
+                  <span style={{ fontWeight: 600, color: selectedCategory === 'All' ? 'var(--cyan)' : 'var(--ink)' }}>
+                    {isArabic ? 'جميع القطاعات' : 'All Categories'}
+                  </span>
+                  <span className="vault-tag-count">{ideas.length}</span>
+                </button>
+
+                {IDEA_CATEGORIES.map((cat) => {
+                  const isCatSelected = selectedCategory === cat.id;
+                  const catCount = ideas.filter(
+                    (i) => i.category === cat.id || i.categoryPath?.includes(cat.id)
+                  ).length;
+
+                  return (
+                    <div key={cat.id} style={{ margin: '3px 0' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isCatSelected) {
+                            setSelectedCategory('All');
+                            setSelectedSubcategory('All');
+                          } else {
+                            setSelectedCategory(cat.id);
+                            setSelectedSubcategory('All');
+                          }
+                        }}
+                        className={`vault-tag-item ${isCatSelected ? 'selected' : ''}`}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          borderRadius: '8px',
+                          padding: '7px 10px',
+                          border: 'none',
+                          background: isCatSelected ? 'rgba(67, 230, 210, 0.15)' : 'transparent',
+                          cursor: 'pointer',
+                          textAlign: isArabic ? 'right' : 'left'
+                        }}
+                      >
+                        <span style={{ fontWeight: isCatSelected ? 700 : 500, fontSize: '12px', color: isCatSelected ? '#fff' : 'var(--ink)' }}>
+                          {isArabic ? cat.name.ar : cat.name.en}
+                        </span>
+                        <span className="vault-tag-count">{catCount}</span>
+                      </button>
+
+                      {/* Subcategories accordion when category is selected */}
+                      {isCatSelected && (
+                        <div
+                          style={{
+                            marginInlineStart: '12px',
+                            borderInlineStart: '2px solid rgba(67, 230, 210, 0.3)',
+                            paddingInlineStart: '6px',
+                            margin: '4px 0 6px 12px'
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSubcategory('All')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              width: '100%',
+                              padding: '4px 8px',
+                              background: selectedSubcategory === 'All' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                              borderRadius: '6px',
+                              border: 'none',
+                              color: selectedSubcategory === 'All' ? 'var(--cyan)' : 'var(--muted)',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              textAlign: isArabic ? 'right' : 'left'
+                            }}
+                          >
+                            <span>{isArabic ? 'كافة الفئات الفرعية' : 'All subcategories'}</span>
+                            <span style={{ fontSize: '10px' }}>{catCount}</span>
+                          </button>
+
+                          {cat.subcategories.map((sub) => {
+                            const isSubSelected = selectedSubcategory === sub.id;
+                            const subCount = ideas.filter(
+                              (i) =>
+                                (i.category === cat.id || i.categoryPath?.includes(cat.id)) &&
+                                (i.subcategory === sub.id || i.categoryPath?.includes(sub.id))
+                            ).length;
+
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => setSelectedSubcategory(isSubSelected ? 'All' : sub.id)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  width: '100%',
+                                  padding: '4px 8px',
+                                  background: isSubSelected ? 'rgba(67, 230, 210, 0.2)' : 'transparent',
+                                  borderRadius: '6px',
+                                  border: 'none',
+                                  color: isSubSelected ? '#fff' : 'var(--muted)',
+                                  fontSize: '11px',
+                                  fontWeight: isSubSelected ? 700 : 400,
+                                  cursor: 'pointer',
+                                  textAlign: isArabic ? 'right' : 'left'
+                                }}
+                              >
+                                <span>{isArabic ? sub.name.ar : sub.name.en}</span>
+                                <span style={{ fontSize: '10px' }}>{subCount}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Sorting Dropdown Menu */}
         <div className="vault-sort-container" id="vault-sort-container">
           <label htmlFor="vault-sort-select" className="vault-sort-label">
@@ -613,6 +847,53 @@ export const VaultView: React.FC<VaultProps> = ({
           {selectedTags.length > 0 && (
             <span style={{ marginInlineStart: '8px', color: 'var(--cyan)' }}>
               • {isArabic ? `الوسوم: ${selectedTags.map((t) => `#${t}`).join(', ')}` : `Tags: ${selectedTags.map((t) => `#${t}`).join(', ')}`}
+            </span>
+          )}
+          {selectedCategory !== 'All' && (
+            <span
+              style={{
+                marginInlineStart: '8px',
+                color: 'var(--cyan)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'rgba(67, 230, 210, 0.1)',
+                padding: '2px 8px',
+                borderRadius: '6px'
+              }}
+            >
+              • {isArabic ? 'القطاع: ' : 'Sector: '}
+              <strong>
+                {getCategoryById(selectedCategory)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en']}
+              </strong>
+              {selectedSubcategory !== 'All' && (
+                <>
+                  {' › '}
+                  <span>
+                    {getSubcategoryById(selectedCategory, selectedSubcategory)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en']}
+                  </span>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('All');
+                  setSelectedSubcategory('All');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginInlineStart: '2px'
+                }}
+                title={isArabic ? 'إلغاء تصفية القطاع' : 'Clear category filter'}
+              >
+                <X className="w-3 h-3 hover:text-red-400 transition-colors" />
+              </button>
             </span>
           )}
           <span style={{ marginInlineStart: '8px', color: 'var(--muted-2)' }}>

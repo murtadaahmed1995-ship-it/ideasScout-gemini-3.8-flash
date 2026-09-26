@@ -102,25 +102,45 @@ export const initialIdeas: Idea[] = [
     },
     description: salonDesc,
     stage: 'Validation',
+    category: 'b2b-saas',
+    subcategory: 'workflow-automation',
+    categoryPath: ['b2b-saas', 'workflow-automation'],
+    categoryInfo: {
+      primaryId: 'b2b-saas',
+      primaryName: { en: 'B2B & Enterprise SaaS', ar: 'برمجيات الشركات وسحابيات الأعمال' },
+      subcategoryId: 'workflow-automation',
+      subcategoryName: { en: 'Workflow & Process Automation', ar: 'أتمتة الأعمال والعمليات' }
+    },
     tags: ['B2B', 'SaaS', 'Service-Industry', 'Automation'],
     opportunityScore: salonAnalysis.opportunityScore,
     confidence: salonAnalysis.confidence,
     readinessScore: salonAnalysis.readinessScore,
-    createdAt: '2026-08-15T10:30:00.000Z',
+    createdAt: '2026-07-20T11:00:00.000Z',
     updatedAt: '2026-09-02T16:45:00.000Z',
     questions: salonQuestions,
     answers: salonAnswers,
     latestAnalysis: salonAnalysis,
     evolution: [
       {
+        id: 'ev-0',
+        opportunityScore: 65,
+        confidence: 15,
+        readinessScore: 50,
+        createdAt: '2026-07-20T11:00:00.000Z',
+        changeSummary: {
+          en: 'Initial problem-space exploration and cancellation severity hypothesis.',
+          ar: 'استكشاف أولي لمساحة المشكلة وفرضية حجم خسائر إلغاء المواعيد.'
+        }
+      },
+      {
         id: 'ev-1',
         opportunityScore: 71,
-        confidence: 22,
+        confidence: 28,
         readinessScore: 68,
         createdAt: '2026-08-15T10:30:00.000Z',
         changeSummary: {
-          en: 'Initial hypothesis created. High opportunity potential tempered by zero verified interviews.',
-          ar: 'صياغة الفرضية الأولية. إمكانات واعدة لكنها مقيدة بغياب أي مقابلات استكشافية.'
+          en: 'Initial hypothesis validated with salon receptionists. High opportunity potential tempered by lack of signed pilots.',
+          ar: 'صياغة الفرضية والتحقق الأولي مع موظفي الاستقبال. إمكانات واعدة مقيدة بنقص التجارب الموقعة.'
         }
       },
       {
@@ -146,25 +166,45 @@ export const initialIdeas: Idea[] = [
     },
     description: farmDesc,
     stage: 'Research',
+    category: 'marketplaces',
+    subcategory: 'b2b-wholesale',
+    categoryPath: ['marketplaces', 'b2b-wholesale'],
+    categoryInfo: {
+      primaryId: 'marketplaces',
+      primaryName: { en: 'Marketplaces & Commerce', ar: 'المنصات التجارية والأسواق' },
+      subcategoryId: 'b2b-wholesale',
+      subcategoryName: { en: 'B2B Wholesale & Farm-to-Table', ar: 'تجارة الجملة والتوريد الزراعي المباشر' }
+    },
     tags: ['Marketplace', 'Supply-Chain', 'B2B', 'Food-Agri'],
     opportunityScore: farmAnalysis.opportunityScore,
     confidence: farmAnalysis.confidence,
     readinessScore: farmAnalysis.readinessScore,
     createdAt: '2026-08-20T14:15:00.000Z',
-    updatedAt: '2026-08-28T09:20:00.000Z',
+    updatedAt: '2026-09-18T11:30:00.000Z',
     questions: farmQuestions,
     answers: farmAnswers,
     latestAnalysis: farmAnalysis,
     evolution: [
       {
         id: 'ev-farm-1',
-        opportunityScore: farmAnalysis.opportunityScore,
-        confidence: farmAnalysis.confidence,
-        readinessScore: farmAnalysis.readinessScore,
+        opportunityScore: 64,
+        confidence: 28,
+        readinessScore: 58,
         createdAt: '2026-08-20T14:15:00.000Z',
         changeSummary: {
           en: 'Opportunity captured from kitchen discussions. Confidence restricted due to zero executed delivery trials or payment.',
           ar: 'تسجيل الفكرة من استطلاعات المطابخ؛ الثقة محدودة لعدم تنفيذ تجارب نقل فعلية أو عمليات دفع.'
+        }
+      },
+      {
+        id: 'ev-farm-2',
+        opportunityScore: farmAnalysis.opportunityScore,
+        confidence: farmAnalysis.confidence,
+        readinessScore: farmAnalysis.readinessScore,
+        createdAt: '2026-09-18T11:30:00.000Z',
+        changeSummary: {
+          en: 'Direct interviews with 8 executive chefs completed. Clear delivery SLAs established, boosting score.',
+          ar: 'إتمام مقابلات مباشرة مع 8 رؤساء طهاة. تحديد اتفاقيات مستوى خدمة التوصيل بوضوح مما رفع التقييم.'
         }
       }
     ]

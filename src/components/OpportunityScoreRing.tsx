@@ -102,10 +102,21 @@ export const OpportunityScoreRing: React.FC<OpportunityScoreRingProps> = ({
   const displayLabel = label ?? defaultLabel;
 
   return (
-    <div
+    <motion.div
       id={id}
+      initial={{ opacity: 0, scale: 0.84, rotate: -8 }}
+      animate={{ 
+        opacity: 1, 
+        scale: isUpdating ? [1, 1.06, 1] : 1, 
+        rotate: 0 
+      }}
+      transition={{ 
+        opacity: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+        scale: isUpdating ? { duration: 0.5, ease: 'easeOut' } : { type: 'spring', stiffness: 280, damping: 22 },
+        rotate: { duration: 0.55, ease: [0.16, 1, 0.3, 1] }
+      }}
       className={`opportunity-score-gauge-wrapper ${isLarge ? 'gauge-large' : 'gauge-small'} ${isUpdating ? 'gauge-is-updating' : ''} ${className}`.trim()}
-      style={{ width: numericSize, height: numericSize }}
+      style={{ width: numericSize, height: numericSize, position: 'relative' }}
       role="meter"
       aria-valuenow={clampedScore}
       aria-valuemin={0}
@@ -117,6 +128,28 @@ export const OpportunityScoreRing: React.FC<OpportunityScoreRingProps> = ({
         className={`gauge-aura ${isUpdating ? (delta && delta > 0 ? 'aura-up' : 'aura-down') : ''}`}
         aria-hidden="true"
       />
+
+      {/* Ripple ring animation on score update */}
+      <AnimatePresence>
+        {isUpdating && (
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0.85 }}
+            animate={{ scale: 1.32, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'absolute',
+              inset: -2,
+              borderRadius: '50%',
+              border: `2px solid ${delta && delta >= 0 ? 'var(--cyan)' : '#fb923c'}`,
+              boxShadow: `0 0 16px ${delta && delta >= 0 ? 'rgba(67, 230, 210, 0.5)' : 'rgba(251, 146, 60, 0.5)'}`,
+              pointerEvents: 'none',
+              zIndex: 0
+            }}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
       <svg
         width={numericSize}
@@ -202,6 +235,6 @@ export const OpportunityScoreRing: React.FC<OpportunityScoreRingProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };

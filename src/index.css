@@ -4253,3 +4253,588 @@ html.light-theme .template-select-dropdown {
   }
 }
 
+/* ==========================================================================
+   7. MONTH-OVER-MONTH OPPORTUNITY TREND INDICATOR STYLES
+   ========================================================================== */
+
+.mom-trend-panel {
+  position: relative;
+  background: var(--navy-1);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: clamp(18px, 2.5vw, 24px);
+  margin-top: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+}
+
+html.light-theme .mom-trend-panel {
+  background: #ffffff;
+  border-color: var(--line);
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.08);
+}
+
+.mom-panel-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+}
+
+.mom-title-cluster {
+  flex: 1 1 340px;
+}
+
+.mom-snapshot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(67, 230, 210, 0.08);
+  border: 1px solid rgba(67, 230, 210, 0.25);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cyan);
+}
+
+html.light-theme .mom-snapshot-badge {
+  background: rgba(13, 148, 136, 0.08);
+  border-color: rgba(13, 148, 136, 0.25);
+  color: var(--cyan);
+}
+
+.mom-main-heading {
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 6px 0 4px;
+  color: var(--ink);
+}
+
+.mom-subtext {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.mom-view-toggle-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--navy-2);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+html.light-theme .mom-view-toggle-bar {
+  background: #e2e8f0;
+}
+
+.mom-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mom-tab-btn:hover:not(.active) {
+  color: var(--ink);
+  background: rgba(128, 164, 199, 0.08);
+}
+
+.mom-tab-btn.active {
+  color: var(--cyan);
+  background: rgba(67, 230, 210, 0.12);
+  border-color: rgba(67, 230, 210, 0.3);
+}
+
+html.light-theme .mom-tab-btn.active {
+  background: #ffffff;
+  color: var(--cyan);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Trend Badges */
+.mom-trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.mom-trend-badge.positive {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.mom-trend-badge.negative {
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #fb7185;
+}
+
+.mom-trend-badge.neutral {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #94a3b8;
+}
+
+/* Spotlight Hero Cards */
+.mom-spotlight-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.mom-hero-card,
+.mom-metric-card {
+  background: rgba(6, 17, 31, 0.65);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+html.light-theme .mom-hero-card,
+html.light-theme .mom-metric-card {
+  background: #f8fafc;
+}
+
+.mom-kpi-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.mom-hero-num-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 6px;
+}
+
+.mom-hero-num {
+  font-size: clamp(2rem, 2.8vw, 2.5rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mom-hero-delta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(128, 164, 199, 0.12);
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mom-hero-meta {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.mom-hero-meta strong {
+  color: var(--ink);
+}
+
+.mom-metric-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 8px 0 6px;
+}
+
+.mom-progress-track {
+  height: 6px;
+  background: rgba(128, 164, 199, 0.18);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 8px 0 8px;
+}
+
+.mom-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.mom-sub-info {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.mom-movers-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 3px;
+  background: rgba(128, 164, 199, 0.12);
+}
+
+.bar-seg.positive {
+  background: #34d399;
+}
+
+.bar-seg.neutral {
+  background: var(--muted-2);
+}
+
+.bar-seg.negative {
+  background: #fb7185;
+}
+
+.mom-movers-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-item i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-item.pos i {
+  background: #34d399;
+}
+
+.legend-item.neu i {
+  background: var(--muted-2);
+}
+
+.legend-item.neg i {
+  background: #fb7185;
+}
+
+.mom-top-driver-snippet {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* SVG Chart Area */
+.mom-chart-container {
+  margin-top: 18px;
+  background: rgba(4, 13, 24, 0.45);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 16px 14px;
+}
+
+html.light-theme .mom-chart-container {
+  background: #ffffff;
+}
+
+.mom-svg-wrapper {
+  width: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.mom-svg-canvas {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+.mom-point-node {
+  transition: transform 0.2s ease;
+}
+
+.mom-point-node:hover circle:first-of-type {
+  transform: scale(1.15);
+  transform-origin: center;
+}
+
+/* Milestone Ribbon */
+.mom-milestone-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.mom-milestone-item {
+  text-align: left;
+  background: rgba(8, 26, 46, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[dir="rtl"] .mom-milestone-item {
+  text-align: right;
+}
+
+html.light-theme .mom-milestone-item {
+  background: #f1f5f9;
+}
+
+.mom-milestone-item:hover {
+  border-color: var(--line-strong);
+  background: rgba(8, 26, 46, 0.8);
+}
+
+.mom-milestone-item.active {
+  border-color: var(--cyan);
+  background: rgba(67, 230, 210, 0.08);
+  box-shadow: 0 0 0 1px rgba(67, 230, 210, 0.3);
+}
+
+.milestone-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.milestone-delta {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.milestone-bar-wrap {
+  height: 4px;
+  background: rgba(128, 164, 199, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.milestone-bar-inner {
+  height: 100%;
+  background: var(--cyan);
+  border-radius: inherit;
+}
+
+/* Deltas Timeline View */
+.mom-deltas-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mom-delta-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 1.1fr 1.2fr;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: rgba(6, 17, 31, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+html.light-theme .mom-delta-row {
+  background: #ffffff;
+}
+
+.delta-date-col {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.delta-circle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cyan);
+  border: 2px solid var(--navy-1);
+  box-shadow: 0 0 0 2px rgba(67, 230, 210, 0.3);
+}
+
+.delta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.delta-badge.pos {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.delta-badge.neg {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fb7185;
+}
+
+.baseline-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(128, 164, 199, 0.12);
+  color: var(--muted);
+}
+
+/* Movers Grid View */
+.mom-idea-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.mom-idea-card {
+  background: rgba(6, 17, 31, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+html.light-theme .mom-idea-card {
+  background: #ffffff;
+}
+
+.mom-idea-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mom-view-report-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(67, 230, 210, 0.08);
+  border: 1px solid rgba(67, 230, 210, 0.2);
+  color: var(--cyan);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mom-view-report-link:hover {
+  background: rgba(67, 230, 210, 0.16);
+  border-color: var(--cyan);
+}
+
+/* Tooltip */
+.mom-floating-tooltip {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.mom-floating-tooltip .tooltip-inner {
+  background: #030c18fa;
+  border: 1px solid var(--cyan);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 14px rgba(67, 230, 210, 0.2);
+  min-width: 180px;
+}
+
+html.light-theme .mom-floating-tooltip .tooltip-inner {
+  background: #ffffff;
+  border-color: var(--cyan);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+/* Compact Widget in sidebar or cards */
+.mom-compact-widget {
+  background: rgba(6, 17, 31, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+/* Mobile & Tablet Adjustments for MoM Indicator */
+@media (max-width: 1024px) {
+  .mom-spotlight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mom-delta-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .mom-panel-topline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mom-view-toggle-bar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mom-tab-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .mom-delta-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mom-milestone-ribbon {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+

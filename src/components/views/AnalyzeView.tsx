@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Idea, Question, Stage } from '../../types';
+import { Idea, Question, Stage, CategoryHierarchyInfo } from '../../types';
 import {
   calculateInputReadiness,
   generateContextualQuestions,
@@ -9,6 +9,12 @@ import {
 } from '../../utils/engine';
 import { Glyph } from '../Glyph';
 import { AnimatedCounter } from '../AnimatedCounter';
+import { CategorySelector } from '../CategorySelector';
+import {
+  suggestCategoryFromContent,
+  getCategoryById,
+  getSubcategoryById
+} from '../../data/categories';
 
 interface AnalyzeViewProps {
   isArabic: boolean;
@@ -97,6 +103,73 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
     return initialDescription.trim().split(/\s+/).slice(0, 4).join(' ') || '';
   });
 
+  const [category, setCategory] = useState<string | undefined>(() => {
+    try {
+      const saved = localStorage.getItem('ideascout_active_draft');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.category) return parsed.category;
+      }
+    } catch {}
+    if (initialDescription) {
+      return suggestCategoryFromContent(initialDescription).primaryId;
+    }
+    return undefined;
+  });
+
+  const [subcategory, setSubcategory] = useState<string | undefined>(() => {
+    try {
+      const saved = localStorage.getItem('ideascout_active_draft');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.subcategory) return parsed.subcategory;
+      }
+    } catch {}
+    if (initialDescription) {
+      return suggestCategoryFromContent(initialDescription).subcategoryId;
+    }
+    return undefined;
+  });
+
+  const [categoryPath, setCategoryPath] = useState<string[] | undefined>(() => {
+    try {
+      const saved = localStorage.getItem('ideascout_active_draft');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.categoryPath) return parsed.categoryPath;
+      }
+    } catch {}
+    if (initialDescription) {
+      const sug = suggestCategoryFromContent(initialDescription);
+      return sug.subcategoryId ? [sug.primaryId, sug.subcategoryId] : [sug.primaryId];
+    }
+    return undefined;
+  });
+
+  const [categoryInfo, setCategoryInfo] = useState<CategoryHierarchyInfo | undefined>(() => {
+    try {
+      const saved = localStorage.getItem('ideascout_active_draft');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.categoryInfo) return parsed.categoryInfo;
+      }
+    } catch {}
+    if (initialDescription) {
+      const sug = suggestCategoryFromContent(initialDescription);
+      const cat = getCategoryById(sug.primaryId);
+      const sub = getSubcategoryById(sug.primaryId, sug.subcategoryId);
+      if (cat) {
+        return {
+          primaryId: cat.id,
+          primaryName: cat.name,
+          subcategoryId: sub?.id,
+          subcategoryName: sub?.name
+        };
+      }
+    }
+    return undefined;
+  });
+
   useEffect(() => {
     if (!ideaTitle && description) {
       setIdeaTitle(description.trim().split(/\s+/).slice(0, 4).join(' '));
@@ -163,6 +236,10 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
         localStorage.setItem('ideascout_active_draft', JSON.stringify({
           description,
           stage,
+          category,
+          subcategory,
+          categoryPath,
+          categoryInfo,
           answers,
           updatedAt: new Date().toISOString()
         }));
@@ -174,7 +251,7 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
     }, 450);
 
     return () => clearTimeout(timer);
-  }, [description, stage, answers]);
+  }, [description, stage, category, subcategory, categoryPath, categoryInfo, answers]);
 
   const readiness = calculateInputReadiness(description, stage, answers);
   const answeredCount = Object.values(answers).filter(isMeaningfulAnswer).length;
@@ -212,6 +289,10 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
         },
         description,
         stage,
+        category,
+        subcategory,
+        categoryPath,
+        categoryInfo,
         tags: tagsToSave,
         questions,
         answers
@@ -339,6 +420,21 @@ export const AnalyzeView: React.FC<AnalyzeViewProps> = ({
                 </small>
               </div>
             )}
+
+            {/* Hierarchical Categorization Selection UI */}
+            <CategorySelector
+              isArabic={isArabic}
+              selectedCategoryId={category}
+              selectedSubcategoryId={subcategory}
+              ideaDescription={description}
+              ideaTitle={ideaTitle}
+              onChange={(selection) => {
+                setCategory(selection.category);
+                setSubcategory(selection.subcategory);
+                setCategoryPath(selection.categoryPath);
+                setCategoryInfo(selection.categoryInfo);
+              }}
+            />
 
             <fieldset className="stage-fieldset border-0 p-0 m-0">
               <legend className="text-sm font-medium text-[var(--muted)] mb-3">{isArabic ? 'مرحلة الفكرة الحالية' : 'Current idea stage'}</legend>

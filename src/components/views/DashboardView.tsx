@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Idea, Profile, WorkspaceView } from '../../types';
 import { Glyph } from '../Glyph';
 import { AnimatedCounter } from '../AnimatedCounter';
 import { OpportunityScoreRing } from '../OpportunityScoreRing';
+import { OpportunityTrendIndicator } from '../OpportunityTrendIndicator';
+import { calculatePortfolioMoMTrend } from '../../utils/trendAnalytics';
+import { getCategoryById, getSubcategoryById } from '../../data/categories';
+import { TrendingUp, TrendingDown, Minus, ArrowUpRight, Sparkles, Layers } from 'lucide-react';
 
 interface DashboardViewProps {
   isArabic: boolean;
@@ -38,10 +42,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       .toUpperCase() || 'IS';
   };
 
-  // Exclude demo sample records from real-user portfolio metrics
+  // Check if real user ideas exist vs sample demo records
   const realUserIdeas = ideas.filter((i) => !i.isSample);
-  const displayIdeas = realUserIdeas.length > 0 ? realUserIdeas : [];
-  const hasOnlySamples = realUserIdeas.length === 0 && ideas.some((i) => i.isSample);
+  const [includeSamples, setIncludeSamples] = useState(() => realUserIdeas.length === 0);
+  
+  // Display ideas for metrics and visual trend tracking
+  const displayIdeas = includeSamples
+    ? ideas
+    : (realUserIdeas.length > 0 ? realUserIdeas : ideas);
+  const isViewingSamplePortfolio = includeSamples && realUserIdeas.length === 0;
 
   if (displayIdeas.length === 0) {
     return (
@@ -78,14 +87,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Glyph name="spark" />
               <span>{isArabic ? 'ابدأ الآن' : 'Start now'}</span>
             </button>
-            {hasOnlySamples && (
+            {ideas.length > 0 && (
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => onNavigate('vault')}
+                onClick={() => setIncludeSamples(true)}
               >
                 <Glyph name="vault" />
-                <span>{isArabic ? 'استعراض النماذج التجريبية' : 'View Sample Demos'}</span>
+                <span>{isArabic ? 'عرض نماذج التطور التجريبية' : 'Preview Sample Evolutions'}</span>
               </button>
             )}
           </div>
@@ -97,10 +106,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const avgOpportunity = Math.round(
     displayIdeas.reduce((acc, curr) => acc + curr.opportunityScore, 0) / displayIdeas.length
   );
-  const totalSnapshots = displayIdeas.reduce((acc, curr) => acc + curr.evolution.length, 0);
+  const totalSnapshots = displayIdeas.reduce((acc, curr) => acc + (curr.evolution?.length || 0), 0);
   const avgConfidence = Math.round(
     displayIdeas.reduce((acc, curr) => acc + curr.confidence, 0) / displayIdeas.length
   );
+
+  // Month-over-month trend analytics across all saved ideas
+  const portfolioMoM = calculatePortfolioMoMTrend(displayIdeas);
 
   const topIdea = [...displayIdeas].sort((a, b) => b.opportunityScore - a.opportunityScore)[0];
   const evolutionList = topIdea?.evolution || [];
@@ -110,6 +122,43 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="view-stack dashboard-view">
+      {/* Sample Portfolio Notification Pill when viewing demo samples */}
+      {isViewingSamplePortfolio && (
+        <section
+          className="demo-portfolio-banner"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '10px 16px',
+            background: 'rgba(67, 230, 210, 0.08)',
+            border: '1px solid rgba(67, 230, 210, 0.25)',
+            borderRadius: '12px',
+            fontSize: '12px',
+            color: 'var(--ink)',
+            marginBottom: '4px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Layers className="w-4 h-4 text-[var(--cyan)]" />
+            <span>
+              {isArabic
+                ? 'يتم عرض مؤشر نمو معدل الفرص الشهري (MoM) بناءً على لقطات التطور للأفكار المحفوظة في الخزنة. أضف فكرتك الأولى لتتبع بياناتك الحقيقية.'
+                : 'Displaying Month-over-Month (MoM) Opportunity Score Growth using evolution snapshot data from saved ideas. Create your first idea to track custom data.'}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ padding: '4px 10px', fontSize: '11px', flexShrink: 0 }}
+            onClick={onStartNew}
+          >
+            {isArabic ? 'حلّل فكرة جديدة' : 'Analyze New Idea'}
+          </button>
+        </section>
+      )}
+
       {/* Welcome Banner */}
       <section className="welcome-panel">
         <div>
@@ -121,18 +170,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </h1>
           <p>
             {isArabic
-              ? 'المقاييس أدناه محسوبة من أفكارك وتحليلاتك المحفوظة فقط.'
-              : 'Every metric below is calculated only from your saved ideas and analyses.'}
+              ? 'المقاييس أدناه محسوبة من أفكارك وتحليلاتك المحفوظة وسجلات تطورها الشهرية.'
+              : 'Every metric below is calculated from your saved ideas, analyses, and tracked monthly evolution.'}
           </p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={onStartNew}>
-          <Glyph name="spark" />
-          <span>{isArabic ? 'حلّل فكرة جديدة' : 'Analyze a new idea'}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {realUserIdeas.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: '12px', padding: '8px 12px' }}
+              onClick={() => setIncludeSamples(!includeSamples)}
+              title="Toggle demo sample data in portfolio"
+            >
+              <span>{includeSamples ? (isArabic ? 'استبعاد النماذج' : 'Exclude Samples') : (isArabic ? 'شمل النماذج' : 'Include Samples')}</span>
+            </button>
+          )}
+          <button type="button" className="btn btn-primary" onClick={onStartNew}>
+            <Glyph name="spark" />
+            <span>{isArabic ? 'حلّل فكرة جديدة' : 'Analyze a new idea'}</span>
+          </button>
+        </div>
       </section>
 
-      {/* 4 Metric Cards */}
-      <section className="metrics-grid">
+      {/* 5 Metric Cards (Including MoM Growth) */}
+      <section className="metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
         <article className="metric-card tone-cyan">
           <div className="metric-icon">
             <Glyph name="vault" />
@@ -140,7 +202,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div>
             <span>{isArabic ? 'الأفكار النشطة' : 'ACTIVE IDEAS'}</span>
             <strong><AnimatedCounter value={displayIdeas.length} /></strong>
-            <small>{isArabic ? 'بياناتك فقط' : 'Your data only'}</small>
+            <small>{isArabic ? 'محفظة الأفكار' : 'Portfolio ideas'}</small>
           </div>
         </article>
 
@@ -155,6 +217,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </article>
 
+        {/* Month-over-Month Growth KPI Card */}
+        <article className="metric-card tone-emerald" style={{ borderColor: 'rgba(67, 230, 210, 0.3)' }}>
+          <div className="metric-icon">
+            {portfolioMoM.direction === 'positive' ? (
+              <TrendingUp className="w-4 h-4 text-[var(--cyan)]" />
+            ) : portfolioMoM.direction === 'negative' ? (
+              <TrendingDown className="w-4 h-4 text-rose-400" />
+            ) : (
+              <Minus className="w-4 h-4 text-[var(--muted)]" />
+            )}
+          </div>
+          <div>
+            <span>{isArabic ? 'النمو الشهري (MoM)' : 'MoM GROWTH'}</span>
+            <strong style={{
+              color: portfolioMoM.direction === 'positive' ? '#34d399' : portfolioMoM.direction === 'negative' ? '#fb7185' : 'var(--cyan)'
+            }}>
+              {portfolioMoM.latestMomGrowthPct > 0 ? `+${portfolioMoM.latestMomGrowthPct}%` : `${portfolioMoM.latestMomGrowthPct}%`}
+            </strong>
+            <small>
+              {portfolioMoM.latestMomDelta > 0 ? `+${portfolioMoM.latestMomDelta}` : portfolioMoM.latestMomDelta}{' '}
+              {isArabic ? 'نقطة مقارنة بالشهر السابق' : 'pts vs prior mo'}
+            </small>
+          </div>
+        </article>
+
         <article className="metric-card tone-violet">
           <div className="metric-icon">
             <Glyph name="spark" />
@@ -162,7 +249,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div>
             <span>{isArabic ? 'التحليلات المكتملة' : 'ANALYSES COMPLETED'}</span>
             <strong><AnimatedCounter value={totalSnapshots} /></strong>
-            <small>{isArabic ? 'تشمل إعادة التحليل' : 'Includes re-analysis'}</small>
+            <small>{isArabic ? 'تشمل لقطات التطور' : 'Includes evolution snaps'}</small>
           </div>
         </article>
 
@@ -178,6 +265,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </article>
       </section>
 
+      {/* Visual Trend Indicator: Month-over-Month Growth Across All Saved Ideas */}
+      <OpportunityTrendIndicator
+        ideas={displayIdeas}
+        isArabic={isArabic}
+        onSelectIdea={onSelectIdea}
+      />
+
       {/* Main Grid: Top Opportunity & Idea DNA */}
       <section className="dashboard-main-grid">
         {/* Top Opportunity */}
@@ -188,6 +282,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {isArabic ? 'أعلى فرصة حالية' : 'TOP CURRENT OPPORTUNITY'}
               </span>
               <h2>{isArabic ? topIdea.title.ar : topIdea.title.en}</h2>
+              {(topIdea.category || topIdea.categoryInfo) && (
+                <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--cyan)', fontWeight: 600 }}>
+                    {topIdea.categoryInfo?.primaryName
+                      ? (isArabic ? topIdea.categoryInfo.primaryName.ar : topIdea.categoryInfo.primaryName.en)
+                      : (getCategoryById(topIdea.category)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en'] || topIdea.category)}
+                  </span>
+                  {(topIdea.subcategory || topIdea.categoryInfo?.subcategoryId) && (
+                    <>
+                      <span style={{ color: 'var(--muted-2)' }}>›</span>
+                      <span style={{ color: 'var(--muted)' }}>
+                        {topIdea.categoryInfo?.subcategoryName
+                          ? (isArabic ? topIdea.categoryInfo.subcategoryName.ar : topIdea.categoryInfo.subcategoryName.en)
+                          : (getSubcategoryById(topIdea.category, topIdea.subcategory)?.[isArabic ? 'name' : 'name']?.[isArabic ? 'ar' : 'en'] || topIdea.subcategory)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <button
               type="button"
